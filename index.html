@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentación Push_Swap - Análisis Detallado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* --- Design Tokens (CSS Variables) --- */
+        :root {
+            /* Dark Palette */
+            --color-bg-primary: #0D1117;
+            --color-bg-secondary: #161B22;
+            --color-bg-tertiary: #21262D;
+            --color-border-primary: #30363D;
+            --color-border-secondary: #484F58;
+            --color-text-primary: #e6edf3;
+            --color-text-secondary: #bdc1c6;
+            --color-text-tertiary: #8b949e;
+            --color-accent-primary: #58a6ff;
+            --color-accent-hover: #79c0ff;
+            --color-accent-active: #388bfd;
+            --color-accent-text: #ffffff;
+            --color-success: #3fb950;
+            --color-success-bg: rgba(63, 185, 80, 0.1);
+            --color-error: #f85149;
+            --color-error-bg: rgba(248, 81, 73, 0.1);
+            --color-warning: #d29922; /* Yellow/Orange */
+            --color-warning-bg: rgba(210, 153, 34, 0.1);
+            --color-focus-ring: rgba(88, 166, 255, 0.5);
+
+            /* Semantic Highlighting Colors */
+            --color-highlight-function: #8be9fd;  /* Cyan */
+            --color-highlight-struct: #ffb86c;   /* Orange */
+            --color-highlight-type: #ffb86c;     /* Orange */
+            --color-highlight-stack: #50fa7b;    /* Green */
+            --color-highlight-field: #f1fa8c;    /* Yellow */
+            --color-highlight-operation: #ff79c6;/* Pink */
+            --color-highlight-constant: #bd93f9; /* Purple */
+            --color-highlight-concept: var(--color-text-primary); /* White/Primary */
+            --color-highlight-file: var(--color-text-tertiary); /* Grey */
+
+            /* Typography */
+            --font-family-sans: 'Inter', sans-serif;
+            --font-family-mono: 'Courier New', Courier, monospace;
+
+            /* Radii */
+            --radius-sm: 0.25rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+
+            /* Layout */
+            --sidebar-width: 240px; /* Width of the sidebar */
+        }
+
+        /* --- Base Styles --- */
+        html {
+             scroll-behavior: smooth;
+             scroll-padding-top: 5rem; /* Adjust scroll position to account for fixed header */
+        }
+        body {
+            font-family: var(--font-family-sans);
+            background-color: var(--color-bg-primary);
+            color: var(--color-text-secondary);
+            line-height: 1.65;
+        }
+
+        /* --- Headings --- */
+        h1, h2, h3, h4, h5, h6 { color: var(--color-text-primary); font-weight: 600; line-height: 1.3; margin-bottom: 0.75em; }
+        h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 1em; }
+        h2 { font-size: 1.75rem; margin-top: 2.5rem; border-bottom: 1px solid var(--color-border-primary); padding-bottom: 0.4em; }
+        h3 { font-size: 1.25rem; margin-top: 2rem; font-weight: 600; }
+        h4 { font-size: 1.1rem; margin-top: 1.5rem; font-weight: 500; color: var(--color-text-primary); } /* Made H4 brighter */
+        h5 { font-size: 1rem; margin-top: 1.25rem; font-weight: 600; color: var(--color-text-secondary); } /* Added H5 style */
+
+
+        /* --- Paragraphs & Links --- */
+        p { margin-bottom: 1.25rem; max-width: 75ch; }
+        a { color: var(--color-accent-primary); text-decoration: none; transition: color 0.2s ease-in-out; }
+        a:hover { color: var(--color-accent-hover); text-decoration: underline; }
+        a strong { color: inherit; }
+
+        /* --- Code Styling --- */
+        pre { background-color: var(--color-bg-secondary); color: var(--color-text-primary); padding: 1.25rem; border-radius: var(--radius-md); overflow-x: auto; font-family: var(--font-family-mono); font-size: 0.9em; border: 1px solid var(--color-border-primary); line-height: 1.5; margin: 1.5rem 0; }
+        code:not(pre code):not([class^="nombre-"]):not([class^="termino-"]):not([class^="concepto-"]) { font-family: var(--font-family-mono); background-color: var(--color-bg-tertiary); color: var(--color-text-primary); padding: 0.2em 0.4em; border-radius: var(--radius-sm); font-size: 0.875em; border: 1px solid var(--color-border-primary); vertical-align: middle; }
+        strong { font-weight: 600; color: var(--color-text-primary); }
+
+        /* --- Semantic Highlighting Classes --- */
+        .nombre-funcion { color: var(--color-highlight-function); }
+        .nombre-struct, .nombre-tipo { color: var(--color-highlight-struct); }
+        .nombre-pila { color: var(--color-highlight-stack); font-weight: 600; }
+        .nombre-campo { color: var(--color-highlight-field); }
+        .nombre-operacion { color: var(--color-highlight-operation); }
+        .nombre-constante { color: var(--color-highlight-constant); }
+        .nombre-archivo { color: var(--color-highlight-file); font-style: italic; }
+        .concepto-clave { color: var(--color-highlight-concept); font-weight: 600; font-family: var(--font-family-sans); }
+        code[class^="nombre-"], code[class^="concepto-"] { background-color: transparent !important; border: none !important; padding: 0 !important; font-size: inherit !important; vertical-align: baseline !important; font-family: var(--font-family-mono); }
+        code.nombre-pila, code.concepto-clave, code.nombre-archivo { font-family: var(--font-family-sans) !important; }
+
+        /* --- Details/Summary Enhanced --- */
+        details { background-color: var(--color-bg-secondary); border: 1px solid var(--color-border-primary); border-radius: var(--radius-md); margin-bottom: 1rem; /* Reduced bottom margin */ transition: background-color 0.2s ease; }
+        details:hover { border-color: var(--color-border-secondary); }
+        details > summary { cursor: pointer; list-style: none; padding: 0.8rem 1.2rem; /* Adjusted padding */ font-weight: 500; color: var(--color-text-primary); display: flex; justify-content: space-between; align-items: center; transition: background-color 0.2s ease; }
+        details > summary:hover { background-color: var(--color-bg-tertiary); }
+        details > summary::-webkit-details-marker { display: none; }
+        details > summary::after { content: '\f078'; font-family: 'Font Awesome 6 Free'; font-weight: 900; font-size: 0.8em; /* Smaller icon */ color: var(--color-text-tertiary); transition: transform 0.25s ease-in-out; margin-left: 0.5rem; }
+        details[open] > summary { border-bottom: 1px solid var(--color-border-primary); }
+        details[open] > summary::after { transform: rotate(180deg); }
+        details > div { padding: 1.5rem; border-top: none; }
+        /* Nested details styling */
+        details details { margin-left: 1.5rem; margin-top: 0.5rem; border-left: 2px solid var(--color-border-secondary); border-radius: 0 var(--radius-md) var(--radius-md) 0; }
+        details details > summary { padding: 0.6rem 1rem; font-size: 0.95em; }
+        details details > div { padding: 1rem 1.5rem; }
+
+
+        /* --- Content Sections --- */
+        .content-section { margin-bottom: 3rem; padding: 2rem; background-color: var(--color-bg-secondary); border-radius: var(--radius-lg); border: 1px solid var(--color-border-primary); box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 2px 8px 0 rgba(0, 0, 0, 0.1); }
+        .content-section ul ul, .content-section ol ol, .content-section ul ol, .content-section ol ul { margin-top: 0.75rem; margin-bottom: 0.75rem; }
+        .content-section ul ul li::marker { content: '- '; color: var(--color-text-tertiary); }
+        .content-section ul ul ul li::marker { content: '• '; color: var(--color-text-tertiary); }
+        .content-section ol { list-style: decimal; margin-left: 1.5rem; }
+        .content-section ol li { padding-left: 0.5rem; margin-bottom: 0.75rem; }
+        /* Styling for function analysis */
+        .function-analysis {
+            margin-bottom: 1.5rem; /* Reduced margin */
+            padding-bottom: 1rem; /* Reduced padding */
+            /* Removed bottom border for nested details */
+        }
+        .function-analysis:last-child {
+             padding-bottom: 0;
+        }
+        .function-analysis h5 { /* Sub-headings within analysis */
+             margin-top: 1rem;
+             margin-bottom: 0.5rem;
+             font-size: 0.9rem; /* Slightly smaller */
+             font-weight: 500;
+             color: var(--color-text-secondary);
+             text-transform: uppercase;
+             letter-spacing: 0.05em;
+        }
+
+
+        /* --- Task Placeholder --- */
+        .task-placeholder { font-style: italic; color: var(--color-text-tertiary); border: 1px dashed var(--color-border-secondary); padding: 1.5rem; border-radius: var(--radius-md); text-align: center; background-color: rgba(0,0,0,0.1); }
+
+        /* --- Utility Classes (Buttons, Inputs) --- */
+        .button { display: inline-flex; align-items: center; justify-content: center; padding: 0.65rem 1.25rem; border-radius: var(--radius-md); font-weight: 500; font-size: 0.95rem; cursor: pointer; transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease; border: 1px solid transparent; user-select: none; white-space: nowrap; }
+        .button:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--color-focus-ring); }
+        .button-primary { background-color: var(--color-accent-primary); color: var(--color-accent-text); border-color: var(--color-accent-primary); }
+        .button-primary:hover { background-color: var(--color-accent-hover); border-color: var(--color-accent-hover); }
+        .button-primary:active { background-color: var(--color-accent-active); border-color: var(--color-accent-active); }
+        .button-primary:disabled { background-color: var(--color-bg-tertiary); border-color: var(--color-border-primary); color: var(--color-text-tertiary); cursor: not-allowed; opacity: 0.7; }
+        .button-secondary { background-color: var(--color-bg-tertiary); color: var(--color-text-primary); border-color: var(--color-border-primary); }
+        .button-secondary:hover { background-color: #2a2f37; border-color: var(--color-border-secondary); }
+        .button-secondary:active { background-color: #30363d; }
+        .button-secondary:disabled { background-color: var(--color-bg-secondary); border-color: var(--color-border-primary); color: var(--color-text-tertiary); cursor: not-allowed; opacity: 0.6; }
+        .button-destructive { background-color: var(--color-error); color: var(--color-accent-text); border-color: var(--color-error); }
+        .button-destructive:hover { background-color: #da3633; border-color: #da3633; }
+        .button-destructive:active { background-color: #b9251a; border-color: #b9251a; }
+        .button-destructive:disabled { background-color: var(--color-bg-tertiary); border-color: var(--color-border-primary); color: var(--color-text-tertiary); cursor: not-allowed; opacity: 0.7; }
+        .input-field { display: block; width: 100%; padding: 0.75rem 1rem; background-color: var(--color-bg-primary); color: var(--color-text-primary); border: 1px solid var(--color-border-primary); border-radius: var(--radius-md); font-size: 0.95rem; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+        .input-field::placeholder { color: var(--color-text-tertiary); }
+        .input-field:focus { outline: none; border-color: var(--color-accent-primary); box-shadow: 0 0 0 3px var(--color-focus-ring); }
+        .input-field:disabled { background-color: var(--color-bg-secondary); cursor: not-allowed; opacity: 0.6; }
+
+        /* --- Data Structure Table Styles --- */
+        .data-structure-table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; margin-bottom: 2rem; font-size: 0.9em; border: 1px solid var(--color-border-primary); border-radius: var(--radius-md); overflow: hidden; }
+        .data-structure-table th, .data-structure-table td { border: 1px solid var(--color-border-primary); padding: 0.85rem 1.1rem; text-align: left; vertical-align: top; }
+        .data-structure-table th { background-color: var(--color-bg-tertiary); font-weight: 600; color: var(--color-text-primary); border-bottom: 2px solid var(--color-border-secondary); }
+        .data-structure-table tbody tr:nth-child(odd) { background-color: rgba(22, 27, 34, 0.3); }
+        .data-structure-table td code { font-size: 0.95em; background-color: var(--color-bg-primary); border-color: var(--color-border-secondary); }
+        .data-structure-table td code[class^="nombre-"] { background-color: transparent !important; border: none !important; padding: 0 !important; font-size: inherit !important; vertical-align: baseline !important; }
+
+        /* --- Diagram Placeholder Styles --- */
+        .diagram-placeholder { border: 1px dashed var(--color-border-secondary); padding: 2rem; text-align: center; color: var(--color-text-tertiary); border-radius: var(--radius-md); margin: 1.5rem 0; background-color: rgba(0,0,0,0.1); }
+        .diagram-placeholder pre { background-color: transparent; border: none; padding: 0; color: inherit; font-size: 0.95em; line-height: 1.4; }
+
+        /* --- Stack Visualization Styles --- */
+        .stack-viz { display: flex; justify-content: space-around; margin: 1.5rem 0; padding: 1rem 0; background-color: rgba(0,0,0,0.1); border: 1px solid var(--color-border-primary); border-radius: var(--radius-md); }
+        .stack { text-align: center; font-family: var(--font-family-mono); font-size: 0.9em; }
+        .stack-title { font-weight: 600; color: var(--color-text-primary); margin-bottom: 0.75rem; border-bottom: 1px solid var(--color-border-secondary); padding-bottom: 0.5rem; }
+        .stack-element { display: block; margin: 0.25rem auto; padding: 0.3rem 0.8rem; background-color: var(--color-bg-tertiary); border: 1px solid var(--color-border-primary); border-radius: var(--radius-sm); color: var(--color-text-secondary); min-width: 50px; }
+        .stack-element .index { font-size: 0.8em; color: var(--color-highlight-constant); margin-left: 0.5em; }
+        .stack-empty { color: var(--color-text-tertiary); font-style: italic; }
+
+        /* --- Mobile Menu Styles --- */
+        #mobile-menu { background-color: var(--color-bg-secondary); border-bottom: 1px solid var(--color-border-primary); z-index: 40; }
+        #mobile-menu a { border-bottom: 1px solid var(--color-border-primary); color: var(--color-text-secondary); }
+        #mobile-menu a:last-child { border-bottom: none; }
+
+        /* --- Sidebar Navigation Styles --- */
+        #sidebar { width: var(--sidebar-width); background-color: var(--color-bg-secondary); border-right: 1px solid var(--color-border-primary); }
+        #sidebar nav a { color: var(--color-text-secondary); border-left: 3px solid transparent; }
+        #sidebar nav a:hover { color: var(--color-text-primary); background-color: var(--color-bg-tertiary); }
+        #sidebar nav a.active { color: var(--color-accent-primary); font-weight: 500; border-left-color: var(--color-accent-primary); }
+
+    </style>
+</head>
+<body class="antialiased text-base">
+
+    <div class="flex">
+        <aside id="sidebar" class="hidden md:block h-screen sticky top-0 overflow-y-auto flex-shrink-0">
+            <div class="p-4 pt-6">
+                 <h3 class="text-lg font-semibold text-white mb-4 pl-2">Navegación</h3>
+                 <nav id="sidebar-nav" class="space-y-1 text-sm">
+                     <a href="#introduccion" class="block py-2 px-3 rounded-md transition-colors duration-150">Introducción</a>
+                     <a href="#tarea-3" class="block py-2 px-3 rounded-md transition-colors duration-150">Ejemplo Visual</a>
+                     <a href="#ui-proof-of-concept" class="block py-2 px-3 rounded-md transition-colors duration-150">Análisis</a>
+                     <a href="#tarea-4" class="block py-2 px-3 rounded-md transition-colors duration-150 active">Funciones</a>
+                     <a href="#tarea-2" class="block py-2 px-3 rounded-md transition-colors duration-150">UI/UX</a>
+                     <a href="#tarea-5" class="block py-2 px-3 rounded-md transition-colors duration-150">Traza Detallada</a>
+                     <a href="#tarea-6" class="block py-2 px-3 rounded-md transition-colors duration-150">Expansión Análisis</a>
+                     <a href="#tarea-7" class="block py-2 px-3 rounded-md transition-colors duration-150">Código Fuente</a>
+                     <a href="#glosario" class="block py-2 px-3 rounded-md transition-colors duration-150">Glosario</a>
+                     <a href="#uso" class="block py-2 px-3 rounded-md transition-colors duration-150">Cómo Usar</a>
+                 </nav>
+            </div>
+        </aside>
+
+        <div class="flex-grow">
+            <header class="bg-gray-900/80 backdrop-blur-md text-white shadow-md sticky top-0 z-50 border-b border-[var(--color-border-primary)]">
+                <nav class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between relative">
+                    <div class="flex items-center space-x-4">
+                         <i class="fas fa-sort text-xl text-[var(--color-accent-primary)]"></i> <span class="text-xl font-semibold text-[var(--color-text-primary)]">Push_Swap Docs</span>
+                    </div>
+                    <div class="hidden md:flex space-x-6 text-sm font-medium">
+                         <a href="#introduccion" class="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">Introducción</a>
+                         <a href="#tarea-3" class="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">Ejemplo</a>
+                         <a href="#ui-proof-of-concept" class="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">Análisis</a>
+                         <a href="#tarea-4" class="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">Funciones</a>
+                         <a href="#tarea-2" class="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">UI/UX</a>
+                         <a href="#tarea-5" class="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">Traza</a>
+                         <a href="#tarea-6" class="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">Expansión</a>
+                         <a href="#tarea-7" class="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">Código</a>
+                         <a href="#glosario" class="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">Glosario</a>
+                         <a href="#uso" class="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">Uso</a>
+                    </div>
+                    <div class="md:hidden">
+                         <button id="mobile-menu-button" class="text-gray-400 hover:text-white focus:outline-none">
+                             <i class="fas fa-bars text-xl"></i>
+                         </button>
+                    </div>
+                     <div id="mobile-menu" class="hidden absolute top-full left-0 right-0 bg-[var(--color-bg-secondary)] border-b border-[var(--color-border-primary)] shadow-lg md:hidden">
+                         <a href="#introduccion" class="block py-3 px-4 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] transition-colors text-center">Introducción</a>
+                         <a href="#tarea-3" class="block py-3 px-4 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] transition-colors text-center">Ejemplo</a>
+                         <a href="#ui-proof-of-concept" class="block py-3 px-4 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] transition-colors text-center">Análisis</a>
+                         <a href="#tarea-4" class="block py-3 px-4 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] transition-colors text-center">Funciones</a>
+                         <a href="#tarea-2" class="block py-3 px-4 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] transition-colors text-center">UI/UX</a>
+                         <a href="#tarea-5" class="block py-3 px-4 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] transition-colors text-center">Traza</a>
+                         <a href="#tarea-6" class="block py-3 px-4 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] transition-colors text-center">Expansión</a>
+                         <a href="#tarea-7" class="block py-3 px-4 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] transition-colors text-center">Código</a>
+                         <a href="#glosario" class="block py-3 px-4 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] transition-colors text-center">Glosario</a>
+                         <a href="#uso" class="block py-3 px-4 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] transition-colors text-center">Cómo Usar</a>
+                     </div>
+                </nav>
+            </header>
+
+            <main class="container mx-auto max-w-6xl p-4 md:p-8 mt-8">
+
+                <section id="introduccion" class="content-section">
+                    <h2>Introducción</h2>
+                    <p>
+                        Bienvenido a la documentación interactiva del proyecto <code class="concepto-clave">Push_Swap</code>. Este proyecto, parte del currículum de <strong>42</strong>, consiste en ordenar una pila de números enteros utilizando un conjunto limitado de operaciones y dos pilas (<code class="nombre-pila">Pila A</code> y <code class="nombre-pila">Pila B</code>), buscando la secuencia de operaciones más corta posible.
+                    </p>
+                    <p>
+                        Esta página web tiene como objetivo desglosar cada aspecto del proyecto, desde la estructura del código hasta la lógica del algoritmo de ordenación, pasando por el manejo de errores y la parte bonus (el verificador <code class="nombre-archivo">checker</code>). La meta es que cualquier persona, independientemente de su nivel previo de conocimiento sobre el proyecto, pueda comprenderlo en su totalidad al finalizar la lectura.
+                    </p>
+                     <p>Utilizaremos el código fuente generado por el script proporcionado como base para este análisis. ¡Exploremos juntos las complejidades y soluciones de <code class="concepto-clave">Push_Swap</code>!</p>
+                </section>
+
+                <section id="tarea-3" class="content-section">
+                     <h2 class="border-b border-[var(--color-border-primary)] pb-2 mb-4">Tarea 3: Desglose Visual del Algoritmo con Ejemplo (N=5)</h2>
+                    <p>Para entender mejor cómo funciona el <code class="concepto-clave">Turk Algorithm</code>, sigamos un ejemplo con 5 números: <code>2 1 5 3 4</code>.</p>
+
+                    <h4>1. Estado Inicial y Asignación de Índices</h4>
+                    <p>La entrada es <code>2 1 5 3 4</code>. Primero, asignamos los índices relativos (0 al 4):</p>
+                    <ul class="list-disc list-inside text-sm mb-4 pl-4">
+                        <li>1 -> <code class="nombre-constante">0</code> (el más pequeño)</li>
+                        <li>2 -> <code class="nombre-constante">1</code></li>
+                        <li>3 -> <code class="nombre-constante">2</code></li>
+                        <li>4 -> <code class="nombre-constante">3</code></li>
+                        <li>5 -> <code class="nombre-constante">4</code> (el más grande)</li>
+                    </ul>
+                    <p>La <code class="nombre-pila">Pila A</code> inicial (mostrando valor e índice):</p>
+                    <div class="stack-viz">
+                        <div class="stack">
+                            <div class="stack-title"><code class="nombre-pila">Pila A</code></div>
+                            <span class="stack-element">2 <span class="index">(1)</span></span>
+                            <span class="stack-element">1 <span class="index">(0)</span></span>
+                            <span class="stack-element">5 <span class="index">(4)</span></span>
+                            <span class="stack-element">3 <span class="index">(2)</span></span>
+                            <span class="stack-element">4 <span class="index">(3)</span></span>
+                        </div>
+                        <div class="stack">
+                            <div class="stack-title"><code class="nombre-pila">Pila B</code></div>
+                            <span class="stack-empty">(Vacía)</span>
+                        </div>
+                    </div>
+
+                    <h4>2. Empuje Inicial a B</h4>
+                    <p>Como tenemos más de 3 elementos, movemos los dos primeros a <code class="nombre-pila">B</code> usando <code class="nombre-operacion">pb</code> dos veces.</p>
+                    <p>Operación: <code class="nombre-operacion">pb</code></p>
+                    <div class="stack-viz">
+                        <div class="stack">
+                            <div class="stack-title"><code class="nombre-pila">Pila A</code></div>
+                            <span class="stack-element">1 <span class="index">(0)</span></span>
+                            <span class="stack-element">5 <span class="index">(4)</span></span>
+                            <span class="stack-element">3 <span class="index">(2)</span></span>
+                            <span class="stack-element">4 <span class="index">(3)</span></span>
+                        </div>
+                        <div class="stack">
+                            <div class="stack-title"><code class="nombre-pila">Pila B</code></div>
+                             <span class="stack-element">2 <span class="index">(1)</span></span>
+                        </div>
+                    </div>
+                     <p>Operación: <code class="nombre-operacion">pb</code></p>
+                     <div class="stack-viz">
+                        <div class="stack">
+                            <div class="stack-title"><code class="nombre-pila">Pila A</code></div>
+                            <span class="stack-element">5 <span class="index">(4)</span></span>
+                            <span class="stack-element">3 <span class="index">(2)</span></span>
+                            <span class="stack-element">4 <span class="index">(3)</span></span>
+                        </div>
+                        <div class="stack">
+                            <div class="stack-title"><code class="nombre-pila">Pila B</code></div>
+                             <span class="stack-element">1 <span class="index">(0)</span></span>
+                             <span class="stack-element">2 <span class="index">(1)</span></span>
+                        </div>
+                    </div>
+                    <p>Ahora <code class="nombre-pila">A</code> tiene 3 elementos y <code class="nombre-pila">B</code> tiene 2.</p>
+
+                    <h4>3. Ordenar los 3 Elementos en A</h4>
+                    <p>La <code class="nombre-pila">Pila A</code> contiene (de arriba a abajo) índices <code>4, 2, 3</code>. Aplicamos <code class="nombre-funcion">sort_three</code>. El caso es <code class="concepto-clave">3-1-2</code> (comparando índices: 4 > 2, 2 < 3, 4 > 3), que se resuelve con <code class="nombre-operacion">ra</code>.</p>
+                    <p>Operación: <code class="nombre-operacion">ra</code></p>
+                     <div class="stack-viz">
+                        <div class="stack">
+                            <div class="stack-title"><code class="nombre-pila">Pila A</code></div>
+                            <span class="stack-element">3 <span class="index">(2)</span></span>
+                            <span class="stack-element">4 <span class="index">(3)</span></span>
+                            <span class="stack-element">5 <span class="index">(4)</span></span>
+                        </div>
+                        <div class="stack">
+                            <div class="stack-title"><code class="nombre-pila">Pila B</code></div>
+                             <span class="stack-element">1 <span class="index">(0)</span></span>
+                             <span class="stack-element">2 <span class="index">(1)</span></span>
+                        </div>
+                    </div>
+                    <p>La <code class="nombre-pila">Pila A</code> ahora está ordenada (índices <code>2, 3, 4</code>).</p>
+
+                    <h4>4. Devolver Elementos de B a A</h4>
+                    <p>Ahora movemos los elementos de <code class="nombre-pila">B</code> de vuelta a <code class="nombre-pila">A</code>, calculando su posición objetivo en <code class="nombre-pila">A</code>.</p>
+
+                    <p><strong>Elemento a mover:</strong> Nodo con valor 1 (índice <code class="nombre-constante">0</code>) de <code class="nombre-pila">B</code>.</p>
+                    <ul class="list-disc list-inside text-sm mb-2 pl-4">
+                        <li><strong>Calcular <code class="nombre-campo">target_pos</code> en A:</strong> Buscamos el índice inmediatamente mayor que 0 en A. Es el índice 2 (valor 3), que está en la posición 0 de A. Por tanto, <code class="nombre-campo">target_pos</code> = 0.</li>
+                        <li><strong>Calcular Coste A:</strong> Para llevar la posición 0 a la cima de A, el coste es 0.</li>
+                        <li><strong>Ejecutar Rotaciones:</strong> No se necesitan rotaciones en A.</li>
+                        <li><strong>Empujar a A:</strong> <code class="nombre-operacion">pa</code></li>
+                    </ul>
+                     <p>Operación: <code class="nombre-operacion">pa</code></p>
+                     <div class="stack-viz">
+                        <div class="stack">
+                            <div class="stack-title"><code class="nombre-pila">Pila A</code></div>
+                            <span class="stack-element">1 <span class="index">(0)</span></span>
+                            <span class="stack-element">3 <span class="index">(2)</span></span>
+                            <span class="stack-element">4 <span class="index">(3)</span></span>
+                            <span class="stack-element">5 <span class="index">(4)</span></span>
+                        </div>
+                        <div class="stack">
+                            <div class="stack-title"><code class="nombre-pila">Pila B</code></div>
+                             <span class="stack-element">2 <span class="index">(1)</span></span>
+                        </div>
+                    </div>
+
+                    <p><strong>Elemento a mover:</strong> Nodo con valor 2 (índice <code class="nombre-constante">1</code>) de <code class="nombre-pila">B</code>.</p>
+                     <ul class="list-disc list-inside text-sm mb-2 pl-4">
+                        <li><strong>Calcular <code class="nombre-campo">target_pos</code> en A:</strong> Buscamos el índice inmediatamente mayor que 1 en A. Es el índice 2 (valor 3), que está en la posición 1 de A. Por tanto, <code class="nombre-campo">target_pos</code> = 1.</li>
+                        <li><strong>Calcular Coste A:</strong> Para llevar la posición 1 a la cima de A (tamaño 4), el coste es 1 (<code class="nombre-operacion">ra</code>).</li>
+                        <li><strong>Ejecutar Rotaciones:</strong> <code class="nombre-operacion">ra</code></li>
+                        <li><strong>Empujar a A:</strong> <code class="nombre-operacion">pa</code></li>
+                    </ul>
+                     <p>Operación: <code class="nombre-operacion">ra</code></p>
+                     <div class="stack-viz">
+                        <div class="stack">
+                            <div class="stack-title"><code class="nombre-pila">Pila A</code></div>
+                            <span class="stack-element">3 <span class="index">(2)</span></span>
+                            <span class="stack-element">4 <span class="index">(3)</span></span>
+                            <span class="stack-element">5 <span class="index">(4)</span></span>
+                             <span class="stack-element">1 <span class="index">(0)</span></span>
+                        </div>
+                        <div class="stack">
+                            <div class="stack-title"><code class="nombre-pila">Pila B</code></div>
+                             <span class="stack-element">2 <span class="index">(1)</span></span>
+                        </div>
+                    </div>
+                     <p>Operación: <code class="nombre-operacion">pa</code></p>
+                     <div class="stack-viz">
+                        <div class="stack">
+                            <div class="stack-title"><code class="nombre-pila">Pila A</code></div>
+                            <span class="stack-element">2 <span class="index">(1)</span></span>
+                            <span class="stack-element">3 <span class="index">(2)</span></span>
+                            <span class="stack-element">4 <span class="index">(3)</span></span>
+                            <span class="stack-element">5 <span class="index">(4)</span></span>
+                             <span class="stack-element">1 <span class="index">(0)</span></span>
+                        </div>
+                        <div class="stack">
+                            <div class="stack-title"><code class="nombre-pila">Pila B</code></div>
+                             <span class="stack-empty">(Vacía)</span>
+                        </div>
+                    </div>
+                    <p>La <code class="nombre-pila">Pila B</code> está vacía.</p>
+
+                    <h4>5. Alineación Final en A</h4>
+                    <p>La <code class="nombre-pila">Pila A</code> contiene los índices <code>1, 2, 3, 4, 0</code>. No está completamente ordenada porque el índice 0 no está en la cima. Buscamos el nodo con índice 0 (valor 1), que está en la posición 4.</p>
+                     <ul class="list-disc list-inside text-sm mb-2 pl-4">
+                         <li><strong>Calcular Coste:</strong> La pila tiene tamaño 5. La posición 4 está más cerca del final. El coste es 4 - 5 = -1 (<code class="nombre-operacion">rra</code>).</li>
+                         <li><strong>Ejecutar Rotación:</strong> <code class="nombre-operacion">rra</code></li>
+                     </ul>
+                     <p>Operación: <code class="nombre-operacion">rra</code></p>
+                     <div class="stack-viz">
+                        <div class="stack">
+                            <div class="stack-title"><code class="nombre-pila">Pila A</code></div>
+                            <span class="stack-element">1 <span class="index">(0)</span></span>
+                            <span class="stack-element">2 <span class="index">(1)</span></span>
+                            <span class="stack-element">3 <span class="index">(2)</span></span>
+                            <span class="stack-element">4 <span class="index">(3)</span></span>
+                            <span class="stack-element">5 <span class="index">(4)</span></span>
+                        </div>
+                        <div class="stack">
+                            <div class="stack-title"><code class="nombre-pila">Pila B</code></div>
+                             <span class="stack-empty">(Vacía)</span>
+                        </div>
+                    </div>
+                    <p>¡La <code class="nombre-pila">Pila A</code> está ahora completamente ordenada!</p>
+
+                    <h4>Secuencia Final de Operaciones</h4>
+                    <p>La secuencia generada para este ejemplo fue: <code class="nombre-operacion">pb</code>, <code class="nombre-operacion">pb</code>, <code class="nombre-operacion">ra</code>, <code class="nombre-operacion">pa</code>, <code class="nombre-operacion">ra</code>, <code class="nombre-operacion">pa</code>, <code class="nombre-operacion">rra</code>.</p>
+                     <p class="text-sm text-[var(--color-text-tertiary)]"><em>Nota: Este es un ejemplo simplificado. El algoritmo real calcula costes para todos los elementos de A en cada paso de la fase 3, lo que podría llevar a secuencias diferentes pero igualmente válidas (y potencialmente más cortas en casos más complejos).</em></p>
+                </section>
+
+                <section id="ui-proof-of-concept" class="content-section">
+                     <h2 class="border-b border-[var(--color-border-primary)] pb-2 mb-4">Profundización del Análisis (Inicio, Estructuras, Algoritmo)</h2>
+                    <p>Esta sección profundiza en los componentes fundamentales que definen el comportamiento y la lógica del programa <code class="nombre-archivo">push_swap</code>.</p>
+                    <h3 class="text-lg font-semibold mb-4 mt-6">Punto de Entrada: <code class="nombre-archivo">main.c</code></h3>
+                    <p>
+                        La función <code class="nombre-funcion">main</code> actúa como el <code class="concepto-clave">director de orquesta</code> del programa. Su responsabilidad principal es inicializar el entorno, validar las entradas y dirigir el flujo hacia la lógica de ordenación.
+                    </p>
+                     <p>
+                        Antes de sumergirnos en el algoritmo, es crucial entender cómo se procesa la entrada. <code class="nombre-archivo">Push_Swap</code> debe aceptar números como argumentos de línea de comandos de dos formas: múltiples argumentos (<code>./push_swap 1 5 2 4</code>) o un único argumento string (<code>./push_swap "1 5 2 4"</code>). La función <code class="nombre-funcion">main</code>, junto con <code class="nombre-funcion">parse_arguments</code>, maneja esta flexibilidad y realiza validaciones exhaustivas.
+                    </p>
+                    <ul class="list-disc list-inside space-y-3 mb-4 text-[var(--color-text-secondary)] pl-4">
+                        <li>
+                            <strong>Inicialización:</strong> Se crea e inicializa la estructura <code class="nombre-struct">t_stacks</code> (<code class="nombre-campo">stacks.a = NULL</code>, <code class="nombre-campo">stacks.b = NULL</code>, etc.) usando <code class="nombre-funcion">init_stacks_struct</code>. Esto asegura un estado limpio antes de cualquier operación.
+                        </li>
+                        <li>
+                            <strong>Validación de Argumentos (<code>argc < 2</code>):</strong> Si no se proporcionan argumentos (aparte del nombre del programa), no hay nada que ordenar, por lo que el programa termina exitosamente (<code class="nombre-constante">EXIT_SUCCESS</code>).
+                        </li>
+                        <li>
+                            <strong>Parsing y Validación Detallada (<code class="nombre-funcion">parse_arguments</code>):</strong> Esta es una <code class="concepto-clave">fase crucial</code>. La función <code class="nombre-funcion">parse_arguments</code> (y sus funciones auxiliares o *helpers*) se encarga de:
+                            <ul class="list-disc list-inside space-y-2 mt-2 ml-6 text-sm">
+                                <li>Manejar tanto un <strong>único argumento</strong> (string entre comillas con números separados por espacios) como <strong>múltiples argumentos</strong> (cada uno un número).</li>
+                                <li>Utilizar <code class="nombre-funcion">ft_split</code> si es necesario para dividir el string (y guardar el resultado en <code class="nombre-campo">stacks.split_args</code> para liberarlo después).</li>
+                                <li>Validar que cada argumento/número sea un <code class="concepto-clave">entero válido</code> (usando <code class="nombre-funcion">is_valid_int_str</code>) y esté dentro de los límites de <code class="nombre-constante">INT_MAX</code> y <code class="nombre-constante">INT_MIN</code> (usando <code class="nombre-funcion">ft_atol</code> para detectar <code class="concepto-clave">overflow/underflow</code>).</li>
+                                <li>Crear nodos (<code class="nombre-funcion">new_node</code>) con el valor entero validado.</li>
+                                <li>Añadir los nodos creados a la <code class="nombre-pila">Pila A</code> (usando <code class="nombre-funcion">add_node_back</code>).</li>
+                                <li>Verificar la ausencia de <code class="concepto-clave">números duplicados</code> (<code class="nombre-funcion">has_duplicates</code>) una vez que todos los números están en la <code class="nombre-pila">Pila A</code>.</li>
+                                <li><strong>Gestionar errores:</strong> Si cualquier validación falla, se llama a <code class="nombre-funcion">exit_error</code>, que imprime "Error", libera toda la memoria asignada (pilas y <code class="nombre-campo">split_args</code>) y termina el programa con <code class="nombre-constante">EXIT_FAILURE</code>.</li>
+                            </ul>
+                        </li>
+                         <li>
+                            <strong>Comprobación Post-Parsing:</strong>
+                            <ul class="list-disc list-inside space-y-1 mt-2 ml-6 text-sm">
+                                <li>Si <code class="nombre-campo">stacks.size_a == 0</code> (por ejemplo, si el argumento fue una cadena vacía como <code>""</code>), el programa termina correctamente.</li>
+                                <li>Si la <code class="nombre-pila">Pila A</code> ya está ordenada (verificado con <code class="nombre-funcion">is_sorted</code>), no se necesita hacer nada y el programa termina exitosamente. Esta es una <code class="concepto-clave">optimización importante</code>.</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <strong>Asignación de Índices (<code class="nombre-funcion">assign_index</code>):</strong> Antes de ordenar, se asigna un <code class="concepto-clave">índice único</code> a cada nodo basado en su valor relativo (0 para el más pequeño, N-1 para el más grande). Esto simplifica enormemente la lógica de ordenación posterior, permitiendo trabajar con valores normalizados de 0 a N-1.
+                        </li>
+                        <li>
+                            <strong>Llamada a la Ordenación (<code class="nombre-funcion">sort_stack</code>):</strong> Si la pila no está vacía ni ordenada, se llama a la función principal que contiene la lógica del algoritmo de ordenación (el <code class="concepto-clave">Turk Algorithm</code> en este caso).
+                        </li>
+                        <li>
+                            <strong>Limpieza Final (<code class="nombre-funcion">free_stacks</code>):</strong> Antes de terminar (<code class="nombre-constante">EXIT_SUCCESS</code>), se libera toda la memoria asignada para los nodos de las pilas <code class="nombre-pila">A</code> y <code class="nombre-pila">B</code>, y para <code class="nombre-campo">split_args</code> si se utilizó. Es crucial para evitar <code class="concepto-clave">fugas de memoria</code> (*memory leaks*).
+                        </li>
+                    </ul>
+                    <pre><code class="language-c">// Fragmento simplificado de main.c con comentarios clave
+#include "../../includes/push_swap.h"
+
+// Inicializa la estructura principal t_stacks
+static void init_stacks_struct(t_stacks *stacks) { /* ... */ }
+
+int main(int argc, char **argv) {
+    t_stacks stacks; // Estructura que contiene las pilas A, B y sus tamaños
+
+    init_stacks_struct(&stacks); // Pone punteros a NULL, tamaños a 0
+
+    // 1. Validación básica de argumentos
+    if (argc < 2) return (EXIT_SUCCESS); // No hay números que ordenar
+
+    // 2. Parsing y Validación detallada de los argumentos
+    if (!parse_arguments(argc, argv, &stacks)) {
+        // Si parse_arguments devuelve 0 (error), libera memoria y sale
+        free_stacks(&stacks); // Libera nodos de A/B y split_args si existe
+        ft_putstr_fd(ERROR_MSG, STDERR_FD); // Imprime "Error" a stderr
+        return (EXIT_FAILURE); // Termina con código de error
+    }
+
+    // 3. Comprobación post-parsing
+    if (stacks.size_a == 0) { // Input válido pero vacío (ej: "./push_swap "" ")
+        free_stacks(&stacks);
+        return (EXIT_SUCCESS);
+    }
+
+    // 4. Optimización: Comprobar si ya está ordenado
+    if (is_sorted(stacks.a)) {
+        free_stacks(&stacks);
+        return (EXIT_SUCCESS); // No hacer nada si ya está ordenado
+    }
+
+    // 5. Preparación para la ordenación: Asignar índices
+    // Convierte los valores originales a índices relativos (0 a N-1)
+    assign_index(stacks.a, stacks.size_a);
+
+    // 6. Ejecutar el algoritmo de ordenación principal
+    sort_stack(&stacks); // Llama a la lógica que mueve elementos entre A y B
+
+    // 7. Limpieza final antes de salir
+    free_stacks(&stacks); // Libera toda la memoria dinámica
+    return (EXIT_SUCCESS); // Termina correctamente
+}</code></pre>
+
+                    <h3 class="text-lg font-semibold mb-4 mt-8">Estructuras de Datos</h3>
+                    <p>La elección de las estructuras de datos es fundamental para la eficiencia y la lógica del algoritmo.</p>
+
+                    <h4 class="mb-3"><code class="nombre-struct">t_stack_node</code>: El Nodo de la Pila</h4>
+                    <p>Representa un elemento individual dentro de las pilas <code class="nombre-pila">A</code> o <code class="nombre-pila">B</code>. Se implementa como un nodo de una <code class="concepto-clave">lista doblemente enlazada circular</code>. Esta elección es clave para la eficiencia de las operaciones de rotación.</p>
+                    <table class="data-structure-table">
+                        <thead>
+                            <tr>
+                                <th>Campo</th>
+                                <th>Tipo</th>
+                                <th>Descripción</th>
+                                <th>Justificación</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code class="nombre-campo">value</code></td>
+                                <td><code class="nombre-tipo">int</code></td>
+                                <td>El número entero original proporcionado como argumento.</td>
+                                <td>Almacena el dato principal que se debe ordenar.</td>
+                            </tr>
+                            <tr>
+                                <td><code class="nombre-campo">index</code></td>
+                                <td><code class="nombre-tipo">int</code></td>
+                                <td>El <code class="concepto-clave">índice relativo</code> del nodo (0 = más pequeño, N-1 = más grande). Calculado por <code class="nombre-funcion">assign_index</code>.</td>
+                                <td><strong>Fundamental:</strong> Simplifica comparaciones y la lógica de ordenación, independientemente de los valores absolutos. Permite tratar <code class="nombre-constante">-500, 0, 1000</code> igual que <code class="nombre-constante">0, 1, 2</code>.</td>
+                            </tr>
+                            <tr>
+                                <td><code class="nombre-campo">pos</code></td>
+                                <td><code class="nombre-tipo">int</code></td>
+                                <td>La <code class="concepto-clave">posición actual</code> del nodo dentro de su pila (0 = top, 1, 2...). Actualizado dinámicamente por <code class="nombre-funcion">update_positions</code>.</td>
+                                <td>Necesario para calcular los costes de rotación (cuántos <code class="nombre-operacion">ra</code>/<code class="nombre-operacion">rra</code> o <code class="nombre-operacion">rb</code>/<code class="nombre-operacion">rrb</code> se necesitan).</td>
+                            </tr>
+                            <tr>
+                                <td><code class="nombre-campo">target_pos</code></td>
+                                <td><code class="nombre-tipo">int</code></td>
+                                <td>La <code class="concepto-clave">posición objetivo</code> que este nodo deveria ocupar en la <em>otra</em> pila para una inserción óptima. Calculado por <code class="nombre-funcion">assign_target_pos_a</code>/<code class="nombre-funcion">b</code>.</td>
+                                <td><strong>Clave para el <code class="concepto-clave">Turk Algorithm</code>:</strong> Indica dónde (en qué posición de la pila destino) debería insertarse un nodo para mantener el orden relativo.</td>
+                            </tr>
+                            <tr>
+                                <td><code class="nombre-campo">cost_a</code></td>
+                                <td><code class="nombre-tipo">int</code></td>
+                                <td>El coste (número de rotaciones <code class="nombre-operacion">ra</code>/<code class="nombre-operacion">rra</code>) para llevar este nodo (si está en A) o su <code class="nombre-campo">target_pos</code> (si está en B) a la cima de la <code class="nombre-pila">Pila A</code>.</td>
+                                <td rowspan="2">Calcula el número de movimientos necesarios en cada pila. Se usa un valor <strong>positivo</strong> para rotaciones (<code class="nombre-operacion">ra</code>/<code class="nombre-operacion">rb</code>) y <strong>negativo</strong> para rotaciones inversas (<code class="nombre-operacion">rra</code>/<code class="nombre-operacion">rrb</code>). Permite encontrar el movimiento combinado más barato (usando <code class="nombre-operacion">rr</code>/<code class="nombre-operacion">rrr</code> cuando sea posible).</td>
+                            </tr>
+                            <tr>
+                                <td><code class="nombre-campo">cost_b</code></td>
+                                <td><code class="nombre-tipo">int</code></td>
+                                <td>El coste (número de rotaciones <code class="nombre-operacion">rb</code>/<code class="nombre-operacion">rrb</code>) para llevar este nodo (si está en B) o su <code class="nombre-campo">target_pos</code> (si está en A) a la cima de la <code class="nombre-pila">Pila B</code>.</td>
+                            </tr>
+                            <tr>
+                                <td><code class="nombre-campo">prev</code></td>
+                                <td><code class="nombre-tipo">struct s_stack_node *</code></td>
+                                <td>Puntero al nodo <strong>anterior</strong> en la lista circular.</td>
+                                <td rowspan="2">Permiten la navegación <strong>bidireccional</strong> y hacen que las operaciones <code class="nombre-operacion">rotate</code> (<code class="nombre-operacion">r</code>) y <code class="nombre-operacion">reverse_rotate</code> (<code class="nombre-operacion">rr</code>) sean extremadamente eficientes (<strong>O(1)</strong>), ya que la "cola" (<code class="nombre-campo">head->prev</code>) y la "cabeza" (<code class="nombre-campo">head</code>) son accesibles directamente y solo se necesita reasignar punteros.</td>
+                            </tr>
+                            <tr>
+                                <td><code class="nombre-campo">next</code></td>
+                                <td><code class="nombre-tipo">struct s_stack_node *</code></td>
+                                <td>Puntero al nodo <strong>siguiente</strong> en la lista circular.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p><strong>¿Por qué una <code class="concepto-clave">lista doblemente enlazada circular</code>?</strong></p>
+                    <ul class="list-disc list-inside space-y-2 mb-4 text-[var(--color-text-secondary)] pl-4">
+                        <li><strong>Eficiencia de Rotaciones (O(1)):</strong> Las operaciones <code class="nombre-operacion">rotate</code> (<code class="nombre-operacion">ra</code>, <code class="nombre-operacion">rb</code>, <code class="nombre-operacion">rr</code>) y <code class="nombre-operacion">reverse_rotate</code> (<code class="nombre-operacion">rra</code>, <code class="nombre-operacion">rrb</code>, <code class="nombre-operacion">rrr</code>) se implementan simplemente cambiando el puntero a la cabeza de la lista (<code class="nombre-campo">*stack = (*stack)->next</code> para <code class="nombre-operacion">r</code> o <code class="nombre-campo">*stack = (*stack)->prev</code> para <code class="nombre-operacion">rr</code>). Esto es una operación de <strong>tiempo constante</strong>, crucial para la eficiencia del algoritmo. En una lista lineal o array, estas operaciones serían O(N).</li>
+                        <li><strong>Acceso Directo a la Cola:</strong> El último elemento (la "cola") es accesible directamente desde la cabeza (<code class="nombre-campo">head->prev</code>), lo cual es útil para operaciones como <code class="nombre-operacion">rra</code>/<code class="nombre-operacion">rrb</code> y para añadir elementos al final (aunque <code class="nombre-archivo">push_swap</code> principalmente añade al principio).</li>
+                        <li><strong>Flexibilidad en Modificaciones:</strong> Aunque <code class="nombre-operacion">push</code> (<code class="nombre-operacion">pa</code>, <code class="nombre-operacion">pb</code>) siempre opera en la cabeza, la estructura permite inserciones/eliminaciones eficientes en cualquier punto si fuera necesario (aunque no se use extensivamente en push_swap más allá del push/pop en la cabeza).</li>
+                    </ul>
+
+                     <div class="diagram-placeholder">
+                        <p><strong>Diagrama Conceptual: Lista Doblemente Enlazada Circular (Refinado)</strong></p>
+                        <pre class="bg-transparent border-none p-0 text-center text-sm">
+       next -->+---------+      +---------+      +---------+<-- prev       
+               | Head: 0 |----->| Node: 1 |----->| Node: 2 |          
+(Tail: N)<---- +---------+      +---------+      +---------+-----> ... ->(Tail: N)
+       prev <--                                                next -->
+                        ^                                |
+                        |-------- next / prev ------------| (Tail->next = Head, Head->prev = Tail)
+                        </pre>
+                        <p>Cada nodo tiene punteros <code>next</code> y <code>prev</code>. El <code>next</code> del último apunta al primero, y el <code>prev</code> del primero apunta al último.</p>
+                    </div>
+
+                    <h4 class="mb-3"><code class="nombre-struct">t_stacks</code>: El Contenedor Principal</h4>
+                    <p>Esta estructura agrupa las dos pilas (<code class="nombre-pila">A</code> y <code class="nombre-pila">B</code>) y metadatos asociados, facilitando pasar toda la información necesaria entre funciones.</p>
+                     <table class="data-structure-table">
+                        <thead>
+                            <tr>
+                                <th>Campo</th>
+                                <th>Tipo</th>
+                                <th>Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code class="nombre-campo">a</code></td>
+                                <td><code class="nombre-tipo">t_stack_node *</code></td>
+                                <td>Puntero a la cabeza (nodo superior) de la <strong><code class="nombre-pila">Pila A</code></strong>. <code class="nombre-constante">NULL</code> si está vacía.</td>
+                            </tr>
+                            <tr>
+                                <td><code class="nombre-campo">b</code></td>
+                                <td><code class="nombre-tipo">t_stack_node *</code></td>
+                                <td>Puntero a la cabeza (nodo superior) de la <strong><code class="nombre-pila">Pila B</code></strong>. <code class="nombre-constante">NULL</code> si está vacía.</td>
+                            </tr>
+                            <tr>
+                                <td><code class="nombre-campo">size_a</code></td>
+                                <td><code class="nombre-tipo">int</code></td>
+                                <td>Número actual de elementos en la <code class="nombre-pila">Pila A</code>. Se actualiza en <code class="nombre-operacion">pa</code>/<code class="nombre-operacion">pb</code>.</td>
+                            </tr>
+                             <tr>
+                                <td><code class="nombre-campo">size_b</code></td>
+                                <td><code class="nombre-tipo">int</code></td>
+                                <td>Número actual de elementos en la <code class="nombre-pila">Pila B</code>. Se actualiza en <code class="nombre-operacion">pa</code>/<code class="nombre-operacion">pb</code>.</td>
+                            </tr>
+                            <tr>
+                                <td><code class="nombre-campo">split_args</code></td>
+                                <td><code class="nombre-tipo">char **</code></td>
+                                <td>Almacena el resultado de <code class="nombre-funcion">ft_split</code> si se usó un solo argumento string. Necesario para liberar la memoria correctamente al final con <code class="nombre-funcion">free_stacks</code>. <code class="nombre-constante">NULL</code> si se usaron múltiples argumentos.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3 class="text-lg font-semibold mb-4 mt-8">Algoritmo de Ordenación: Visión General (<code class="concepto-clave">Turk Algorithm</code>)</h3>
+                    <p>
+                        Dado que no podemos acceder directamente a los elementos de la pila excepto al superior, ni usar operaciones de comparación y swap arbitrarias, los algoritmos de ordenación clásicos (como QuickSort, MergeSort, etc.) no son aplicables directamente. Necesitamos una estrategia que funcione únicamente con las operaciones permitidas: <code class="nombre-operacion">sa</code>/<code class="nombre-operacion">sb</code>/<code class="nombre-operacion">ss</code>, <code class="nombre-operacion">pa</code>/<code class="nombre-operacion">pb</code>, <code class="nombre-operacion">ra</code>/<code class="nombre-operacion">rb</code>/<code class="nombre-operacion">rr</code>, y <code class="nombre-operacion">rra</code>/<code class="nombre-operacion">rrb</code>/<code class="nombre-operacion">rrr</code>.
+                    </p>
+                    <p>
+                        El <code class="concepto-clave">Turk Algorithm</code> es una <code class="concepto-clave">heurística</code> popular para <code class="nombre-archivo">push_swap</code>. Su idea central es usar la <code class="nombre-pila">Pila B</code> como un área temporal para mover elementos de <code class="nombre-pila">A</code> de forma inteligente, dejando <code class="nombre-pila">A</code> con pocos elementos (3) que son fáciles de ordenar. Luego, los elementos se devuelven de <code class="nombre-pila">B</code> a <code class="nombre-pila">A</code>, insertándolos en su posición ordenada correcta.
+                    </p>
+                    <p><strong>Fases Principales:</strong></p>
+                    <ol class="list-decimal list-inside space-y-3 mb-4 text-[var(--color-text-secondary)] pl-4">
+                        <li>
+                            <strong>Preparación e Indexación:</strong> Como se vio en <code class="nombre-funcion">main</code>, se valida la entrada y se asignan <code class="concepto-clave">índices únicos</code> a cada número (<code class="nombre-funcion">assign_index</code>). Esto es crucial para el resto del algoritmo.
+                        </li>
+                        <li>
+                            <strong>Empuje Inicial a B (<code class="nombre-funcion">push_initial_to_b</code>):</strong> Se mueven los dos primeros elementos de <code class="nombre-pila">A</code> a <code class="nombre-pila">B</code> (usando <code class="nombre-operacion">do_pb</code>), a menos que la <code class="nombre-pila">Pila A</code> ya tenga 3 o menos elementos. Esto crea espacio en <code class="nombre-pila">A</code> y establece una base en <code class="nombre-pila">B</code> para calcular las posiciones objetivo.
+                        </li>
+                        <li>
+                            <strong>Iteración Principal (Bucle en <code class="nombre-funcion">turk_sort</code>):</strong> Mientras queden más de 3 elementos en <code class="nombre-pila">A</code> y <code class="nombre-pila">A</code> no esté ordenada:
+                            <ul class="list-disc list-inside space-y-2 mt-2 ml-6 text-sm">
+                                <li><strong>Actualizar Estado:</strong> Se recalculan las posiciones actuales (<code class="nombre-campo">pos</code>) de cada nodo en ambas pilas (<code class="nombre-funcion">update_positions</code>). Es necesario porque las rotaciones y pushes cambian las posiciones.</li>
+                                <li><strong>Calcular Posiciones Objetivo en B:</strong> Para cada nodo en <code class="nombre-pila">A</code>, se determina cuál sería su posición ideal (<code class="nombre-campo">target_pos</code>) si se moviera a <code class="nombre-pila">B</code> (<code class="nombre-funcion">assign_target_pos_b</code> y <code class="nombre-funcion">get_target_pos_in_b</code>). El objetivo en <code class="nombre-pila">B</code> es generalmente el nodo con el índice <strong>inmediatamente más pequeño</strong> que el índice del nodo de <code class="nombre-pila">A</code>. Si no hay uno más pequeño, el objetivo es el nodo con el índice <strong>más grande</strong> de <code class="nombre-pila">B</code> (para mantener la circularidad del orden).</li>
+                                <li><strong>Calcular Costes de Movimiento:</strong> Para cada nodo en <code class="nombre-pila">A</code>, se calcula el coste (<code class="nombre-campo">cost_a</code> y <code class="nombre-campo">cost_b</code>) para llevar tanto el nodo de <code class="nombre-pila">A</code> a la cima de <code class="nombre-pila">A</code> como su nodo objetivo en <code class="nombre-pila">B</code> a la cima de <code class="nombre-pila">B</code> (<code class="nombre-funcion">calculate_cost_to_b</code>). Se calcula el camino más corto (<code class="nombre-operacion">r</code> vs <code class="nombre-operacion">rr</code>).</li>
+                                <li><strong>Encontrar el Movimiento Más Barato:</strong> Se identifica el nodo en <code class="nombre-pila">A</code> cuyo <code class="concepto-clave">movimiento combinado</code> (considerando rotaciones simultáneas <code class="nombre-operacion">rr</code>/<code class="nombre-operacion">rrr</code> si los costes tienen el mismo signo) sea el más económico (<code class="nombre-funcion">find_cheapest_node</code> y <code class="nombre-funcion">calculate_combined_cost</code>).</li>
+                                <li><strong>Ejecutar y Empujar:</strong> Se realizan las rotaciones calculadas (<code class="nombre-funcion">execute_rotations</code>) para llevar el nodo elegido y su objetivo a la cima, y luego se empuja el nodo más barato de <code class="nombre-pila">A</code> a <code class="nombre-pila">B</code> (<code class="nombre-operacion">do_pb</code>).</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <strong>Ordenar los Tres Restantes en A (<code class="nombre-funcion">sort_three</code>):</strong> Cuando <code class="nombre-pila">A</code> tiene exactamente 3 elementos, se aplica una lógica específica (con un máximo de 2 operaciones: <code class="nombre-operacion">sa</code>, <code class="nombre-operacion">ra</code>, <code class="nombre-operacion">rra</code>) para ordenarlos eficientemente.
+                        </li>
+                        <li>
+                            <strong>Devolver Elementos a A (<code class="nombre-funcion">move_all_to_a</code>):</strong> Mientras <code class="nombre-pila">B</code> no esté vacía:
+                             <ul class="list-disc list-inside space-y-2 mt-2 ml-6 text-sm">
+                                 <li>Se actualizan posiciones y se calcula la <code class="concepto-clave">posición objetivo en A</code> para el nodo superior de <code class="nombre-pila">B</code> (<code class="nombre-funcion">assign_target_pos_a</code>). El objetivo en <code class="nombre-pila">A</code> es el nodo con el índice <strong>inmediatamente más grande</strong> que el índice del nodo de <code class="nombre-pila">B</code>. Si no existe (el nodo de <code class="nombre-pila">B</code> es el más grande de todos), el objetivo es el nodo con el índice <strong>más pequeño</strong> de <code class="nombre-pila">A</code>.</li>
+                                 <li>Se calcula el coste para llevar esa posición objetivo en <code class="nombre-pila">A</code> a la cima (<code class="nombre-funcion">calculate_cost_to_a</code>).</li>
+                                 <li>Se rota <code class="nombre-pila">A</code> hasta que la posición objetivo esté en la cima (<code class="nombre-funcion">rotate_a_to_top</code>).</li>
+                                 <li>Se empuja el elemento de <code class="nombre-pila">B</code> a <code class="nombre-pila">A</code> (<code class="nombre-operacion">do_pa</code>), insertándolo en el lugar correcto.</li>
+                             </ul>
+                        </li>
+                         <li>
+                            <strong>Alineación Final en A (<code class="nombre-funcion">final_sort_a</code>):</strong> Una vez que todos los elementos están de vuelta en <code class="nombre-pila">A</code> (y teóricamente ordenados), se busca el nodo con <code class="concepto-clave">índice 0</code> (el más pequeño) y se rota <code class="nombre-pila">A</code> (usando <code class="nombre-operacion">ra</code> o <code class="nombre-operacion">rra</code>, lo que sea más corto) hasta que este nodo quede en la cima. Esto asegura que la pila esté completamente ordenada y comience con el elemento más pequeño, cumpliendo el requisito final.
+                         </li>
+                    </ol>
+                    <h4>Nota sobre la Eficiencia</h4>
+                    <p>
+                        El objetivo principal de <code class="nombre-archivo">push_swap</code> es encontrar una secuencia de operaciones <strong>lo más corta posible</strong>. El <code class="concepto-clave">Turk Algorithm</code> intenta lograr esto mediante decisiones <code class="concepto-clave">localmente óptimas</code>: en cada paso de la fase principal, calcula el "coste" de mover cada elemento de <code class="nombre-pila">A</code> a <code class="nombre-pila">B</code> (considerando las rotaciones necesarias en ambas pilas) y elige el elemento con el coste combinado más bajo.
+                    </p>
+                    <p>
+                        Si bien esta estrategia es generalmente muy eficiente y produce resultados considerablemente mejores que enfoques más simples, <strong>no garantiza matemáticamente</strong> la solución con el número mínimo absoluto de operaciones en todos los casos posibles (eso sería un problema mucho más complejo computacionalmente). Sin embargo, es una heurística muy efectiva para el propósito del proyecto 42.
+                    </p>
+                     <div class="diagram-placeholder">
+                         <p><strong>Diagrama de Flujo Conceptual del Algoritmo Turk (Refinado)</strong></p>
+                         <pre class="bg-transparent border-none p-0 text-sm text-left overflow-x-auto">
++-------------------------+     +-----------------------+     +-------------------+
+| <strong>Inicio</strong>                  | --> | Parsear & Validar Args| --> | Asignar Índices   |
++-------------------------+     +-----------------------+     +-------------------+
+           |
+           V
++-------------------------+     +-------------------------------------------------+
+| Empujar Iniciales a B   | --> | <strong>Bucle Principal</strong> (Mientras size_a > 3 y !sorted) |
+| (si size_a > 3)         |     +-------------------------------------------------+
++-------------------------+                 |
+                                            V
+                             +---------------------------------+
+                             | <strong>Iteración (Elegir y Mover a B)</strong> |
+                             | 1. Actualizar Posiciones        |
+                             | 2. Calcular Target_Pos (en B)   |
+                             | 3. Calcular Costos (cost_a/b)   |
+                             | 4. Encontrar Nodo + Barato      |
+                             | 5. Ejecutar Rotaciones (A y B)  |
+                             | 6. Empujar a B (<code class="nombre-operacion">do_pb</code>)          |-----> (Vuelve al inicio del Bucle)
+                             +---------------------------------+
+                                            | (Cuando size_a <= 3)
+                                            V
++-------------------------+     +-------------------------------------------------+
+| Ordenar 3 en A          | --> | <strong>Bucle Devolución</strong> (Mientras size_b > 0)          |
+| (<code class="nombre-funcion">sort_three</code>)        |     +-------------------------------------------------+
++-------------------------+                 |
+                                            V
+                             +---------------------------------+
+                             | <strong>Iteración (Devolver a A)</strong>       |
+                             | 1. Actualizar Posiciones        |
+                             | 2. Calcular Target_Pos (en A)   |
+                             | 3. Calcular Costo A             |
+                             | 4. Rotar A a Target_Pos         |
+                             | 5. Empujar a A (<code class="nombre-operacion">do_pa</code>)          |-----> (Vuelve al inicio del Bucle)
+                             +---------------------------------+
+                                            | (Cuando size_b == 0)
+                                            V
++-------------------------+     +-------------------------+
+| Rotación Final en A     | --> | <strong>Fin</strong>                    |
+| (<code class="nombre-funcion">final_sort_a</code>)      |     +-------------------------+
++-------------------------+
+                         </pre>
+                    </div>
+                </section>
+
+                <section id="tarea-4" class="content-section">
+                    <h2 class="border-b border-[var(--color-border-primary)] pb-2 mb-4">Tarea 4: Análisis Funcional Exhaustivo</h2>
+                    <p>En esta sección, analizaremos en detalle las funciones clave de los archivos <code>.c</code> del proyecto, excluyendo <code>libft</code>.</p>
+
+                    <details class="border border-[var(--color-border-primary)] rounded-md mb-4">
+                        <summary class="bg-[var(--color-bg-tertiary)] hover:bg-opacity-80 rounded-t-md">
+                            <code class="nombre-archivo">mandatory/srcs/main.c</code> (1/28)
+                        </summary>
+                        <div class="p-4 bg-[var(--color-bg-secondary)] rounded-b-md">
+                            <details class="function-analysis">
+                                <summary><code class="nombre-funcion">init_stacks_struct</code></summary>
+                                <div>
+                                    <h5>Propósito</h5>
+                                    <p>Inicializar los campos de la estructura principal <code class="nombre-struct">t_stacks</code> a sus valores por defecto (<code class="nombre-constante">NULL</code> para punteros, 0 para tamaños) antes de empezar a procesar los argumentos.</p>
+                                    <h5>Parámetros</h5>
+                                    <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-struct">t_stacks *stacks</code>: Puntero a la estructura que contiene las pilas y metadatos.</li>
+                                    </ul>
+                                    <h5>Lógica</h5>
+                                    <p>Asigna <code class="nombre-constante">NULL</code> a los punteros de las pilas <code class="nombre-campo">a</code> y <code class="nombre-campo">b</code>, y a <code class="nombre-campo">split_args</code>. Asigna 0 a los tamaños <code class="nombre-campo">size_a</code> y <code class="nombre-campo">size_b</code>.</p>
+                                    <h5>Código</h5>
+                                    <pre><code class="language-c">static void init_stacks_struct(t_stacks *stacks)
+{
+    stacks->a = NULL;
+    stacks->b = NULL;
+    stacks->size_a = 0;
+    stacks->size_b = 0;
+    stacks->split_args = NULL;
+}</code></pre>
+                                </div>
+                            </details>
+                            <details class="function-analysis">
+                                <summary><code class="nombre-funcion">main</code></summary>
+                                <div>
+                                    <h5>Propósito</h5>
+                                    <p>Punto de entrada principal del programa <code class="nombre-archivo">push_swap</code>. Orquesta la validación de argumentos, la inicialización de las pilas, la asignación de índices, la ejecución del algoritmo de ordenación y la limpieza final.</p>
+                                    <h5>Parámetros</h5>
+                                    <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-tipo">int argc</code>: Número de argumentos de la línea de comandos.</li>
+                                        <li><code class="nombre-tipo">char **argv</code>: Array de strings con los argumentos.</li>
+                                    </ul>
+                                    <h5>Retorno</h5>
+                                     <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-constante">EXIT_SUCCESS</code> (0): Si el programa se ejecuta correctamente (incluyendo casos sin argumentos, entrada vacía o ya ordenada).</li>
+                                        <li><code class="nombre-constante">EXIT_FAILURE</code> (1): Si ocurre un error durante el parsing o validación.</li>
+                                    </ul>
+                                    <h5>Lógica Principal</h5>
+                                    <ol class="list-decimal list-inside space-y-2 pl-4 text-sm">
+                                        <li>Llama a <code class="nombre-funcion">init_stacks_struct</code> para inicializar la estructura <code class="nombre-struct">stacks</code>.</li>
+                                        <li>Comprueba si <code class="nombre-tipo">argc</code> es menor que 2. Si es así, no hay números que ordenar y retorna <code class="nombre-constante">EXIT_SUCCESS</code>.</li>
+                                        <li>Llama a <code class="nombre-funcion">parse_arguments</code> para procesar los argumentos (<code class="nombre-tipo">argv</code>) y llenar la <code class="nombre-pila">Pila A</code>.</li>
+                                        <li>Si <code class="nombre-funcion">parse_arguments</code> devuelve error (0), libera memoria con <code class="nombre-funcion">free_stacks</code>, imprime "Error" y retorna <code class="nombre-constante">EXIT_FAILURE</code>.</li>
+                                        <li>Comprueba si la <code class="nombre-pila">Pila A</code> está vacía (<code class="nombre-campo">stacks.size_a == 0</code>) después del parsing. Si es así, libera memoria y retorna <code class="nombre-constante">EXIT_SUCCESS</code>.</li>
+                                        <li>Comprueba si la <code class="nombre-pila">Pila A</code> ya está ordenada usando <code class="nombre-funcion">is_sorted</code>. Si es así, libera memoria y retorna <code class="nombre-constante">EXIT_SUCCESS</code> (optimización).</li>
+                                        <li>Si la pila no está vacía ni ordenada, llama a <code class="nombre-funcion">assign_index</code> para calcular y asignar los índices relativos a cada nodo en <code class="nombre-pila">A</code>.</li>
+                                        <li>Llama a <code class="nombre-funcion">sort_stack</code> para ejecutar el algoritmo principal de ordenación.</li>
+                                        <li>Finalmente, llama a <code class="nombre-funcion">free_stacks</code> para liberar toda la memoria dinámica asignada.</li>
+                                        <li>Retorna <code class="nombre-constante">EXIT_SUCCESS</code>.</li>
+                                    </ol>
+                                     <h5>Dependencias</h5>
+                                     <p class="text-sm">Llama a: <code class="nombre-funcion">init_stacks_struct</code>, <code class="nombre-funcion">parse_arguments</code>, <code class="nombre-funcion">free_stacks</code>, <code class="nombre-funcion">ft_putstr_fd</code>, <code class="nombre-funcion">is_sorted</code>, <code class="nombre-funcion">assign_index</code>, <code class="nombre-funcion">sort_stack</code>.</p>
+                                    <h5>Código</h5>
+                                    <pre><code class="language-c">int main(int argc, char **argv)
+{
+    t_stacks stacks;
+
+    init_stacks_struct(&stacks);
+    if (argc < 2)
+        return (EXIT_SUCCESS);
+    if (!parse_arguments(argc, argv, &stacks))
+    {
+        free_stacks(&stacks);
+        ft_putstr_fd(ERROR_MSG, STDERR_FD);
+        return (EXIT_FAILURE);
+    }
+    if (stacks.size_a == 0)
+    {
+        free_stacks(&stacks);
+        return (EXIT_SUCCESS);
+    }
+    if (is_sorted(stacks.a))
+    {
+        free_stacks(&stacks);
+        return (EXIT_SUCCESS);
+    }
+    assign_index(stacks.a, stacks.size_a);
+    sort_stack(&stacks);
+    free_stacks(&stacks);
+    return (EXIT_SUCCESS);
+}</code></pre>
+                                </div>
+                            </details>
+                        </div>
+                    </details>
+
+                    <details class="border border-[var(--color-border-primary)] rounded-md mb-4">
+                        <summary class="bg-[var(--color-bg-tertiary)] hover:bg-opacity-80 rounded-t-md">
+                            <code class="nombre-archivo">mandatory/srcs/utils/errors.c</code> (2/28)
+                        </summary>
+                        <div class="p-4 bg-[var(--color-bg-secondary)] rounded-b-md">
+                            <details class="function-analysis">
+                                <summary><code class="nombre-funcion">free_stack</code></summary>
+                                <div>
+                                    <h5>Propósito</h5>
+                                    <p>Liberar la memoria de todos los nodos de una pila (lista doblemente enlazada circular).</p>
+                                    <h5>Parámetros</h5>
+                                    <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-tipo">t_stack_node **stack</code>: Puntero al puntero de la cabeza de la pila a liberar. Se usa doble puntero para poder poner el puntero original a <code class="nombre-constante">NULL</code>.</li>
+                                    </ul>
+                                    <h5>Lógica</h5>
+                                    <ol class="list-decimal list-inside space-y-2 pl-4 text-sm">
+                                        <li>Comprueba si el doble puntero o la pila son <code class="nombre-constante">NULL</code>. Si es así, no hace nada.</li>
+                                        <li>Guarda el puntero al último nodo (<code class="nombre-campo">head->prev</code>).</li>
+                                        <li>Rompe la circularidad estableciendo el <code class="nombre-campo">next</code> del último nodo a <code class="nombre-constante">NULL</code>.</li>
+                                        <li>Itera desde la cabeza original (<code class="nombre-campo">head</code>) hasta el final (<code class="nombre-constante">NULL</code>).</li>
+                                        <li>En cada iteración, guarda el puntero al siguiente nodo, libera el nodo actual con <code class="nombre-funcion">free</code> y avanza al siguiente.</li>
+                                        <li>Finalmente, establece el puntero original de la pila (<code>*stack</code>) a <code class="nombre-constante">NULL</code>.</li>
+                                    </ol>
+                                    <h5>Código</h5>
+                                    <pre><code class="language-c">void free_stack(t_stack_node **stack)
+{
+    t_stack_node    *current;
+    t_stack_node    *head;
+    t_stack_node    *next_node;
+    t_stack_node    *last;
+
+    if (!stack || !*stack)
+        return ;
+    head = *stack;
+    last = head->prev; // Get the tail node
+    if (last)
+        last->next = NULL; // Break the circular link
+    current = head;
+    while (current)
+    {
+        next_node = current->next; // Store next node
+        free(current);             // Free current node
+        current = next_node;       // Move to the next
+    }
+    *stack = NULL; // Set the original stack pointer to NULL
+}</code></pre>
+                                </div>
+                            </details>
+
+                             <details class="function-analysis">
+                                <summary><code class="nombre-funcion">free_split_args</code> (static)</summary>
+                                <div>
+                                    <h5>Propósito</h5>
+                                    <p>Liberar la memoria asignada por <code class="nombre-funcion">ft_split</code> para el array de strings <code class="nombre-campo">split_args</code>.</p>
+                                    <h5>Parámetros</h5>
+                                    <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-tipo">char **args</code>: El array de strings devuelto por <code class="nombre-funcion">ft_split</code>.</li>
+                                    </ul>
+                                    <h5>Lógica</h5>
+                                    <p>Utiliza la función <code class="nombre-funcion">ft_free_split</code> (asumiendo que existe en <code>libft</code>) para liberar cada string del array y luego el propio array.</p>
+                                    <h5>Código</h5>
+                                    <pre><code class="language-c">static void free_split_args(char **args)
+{
+    if (args)
+        ft_free_split(args); // Assumes ft_free_split exists in libft
+}</code></pre>
+                                </div>
+                            </details>
+
+                            <details class="function-analysis">
+                                <summary><code class="nombre-funcion">free_stacks</code></summary>
+                                <div>
+                                    <h5>Propósito</h5>
+                                    <p>Liberar toda la memoria asociada a la estructura <code class="nombre-struct">t_stacks</code>, incluyendo ambas pilas (<code class="nombre-pila">A</code> y <code class="nombre-pila">B</code>) y el array <code class="nombre-campo">split_args</code> si fue utilizado.</p>
+                                    <h5>Parámetros</h5>
+                                    <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-struct">t_stacks *stacks</code>: Puntero a la estructura principal.</li>
+                                    </ul>
+                                    <h5>Lógica</h5>
+                                    <ol class="list-decimal list-inside space-y-2 pl-4 text-sm">
+                                        <li>Comprueba si el puntero <code class="nombre-struct">stacks</code> es <code class="nombre-constante">NULL</code>.</li>
+                                        <li>Llama a <code class="nombre-funcion">free_stack</code> para liberar la <code class="nombre-pila">Pila A</code> (<code class="nombre-campo">stacks->a</code>).</li>
+                                        <li>Llama a <code class="nombre-funcion">free_stack</code> para liberar la <code class="nombre-pila">Pila B</code> (<code class="nombre-campo">stacks->b</code>).</li>
+                                        <li>Comprueba si <code class="nombre-campo">stacks->split_args</code> no es <code class="nombre-constante">NULL</code> (lo que indica que se usó <code class="nombre-funcion">ft_split</code>).</li>
+                                        <li>Si no es <code class="nombre-constante">NULL</code>, llama a <code class="nombre-funcion">free_split_args</code> para liberar el array y lo establece a <code class="nombre-constante">NULL</code>.</li>
+                                    </ol>
+                                    <h5>Dependencias</h5>
+                                    <p class="text-sm">Llama a: <code class="nombre-funcion">free_stack</code>, <code class="nombre-funcion">free_split_args</code>.</p>
+                                    <h5>Código</h5>
+                                    <pre><code class="language-c">void free_stacks(t_stacks *stacks)
+{
+    if (!stacks)
+        return ;
+    free_stack(&(stacks->a));
+    free_stack(&(stacks->b));
+    if (stacks->split_args)
+    {
+        free_split_args(stacks->split_args);
+        stacks->split_args = NULL;
+    }
+}</code></pre>
+                                </div>
+                            </details>
+
+                             <details class="function-analysis">
+                                <summary><code class="nombre-funcion">exit_error</code></summary>
+                                <div>
+                                    <h5>Propósito</h5>
+                                    <p>Función centralizada para manejar errores fatales. Imprime un mensaje de error, libera toda la memoria asignada y termina el programa.</p>
+                                    <h5>Parámetros</h5>
+                                    <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-struct">t_stacks *stacks</code>: Puntero a la estructura principal (puede ser <code class="nombre-constante">NULL</code> si el error ocurre antes de su inicialización completa).</li>
+                                    </ul>
+                                    <h5>Lógica</h5>
+                                    <ol class="list-decimal list-inside space-y-2 pl-4 text-sm">
+                                        <li>Imprime el mensaje "Error\n" en la salida de error estándar (<code class="nombre-constante">STDERR_FD</code>) usando <code class="nombre-funcion">ft_putstr_fd</code>.</li>
+                                        <li>Si el puntero <code class="nombre-struct">stacks</code> no es <code class="nombre-constante">NULL</code>, llama a <code class="nombre-funcion">free_stacks</code> para liberar toda la memoria asociada.</li>
+                                        <li>Termina la ejecución del programa con el código de estado <code class="nombre-constante">EXIT_FAILURE</code> (generalmente 1).</li>
+                                    </ol>
+                                     <h5>Dependencias</h5>
+                                     <p class="text-sm">Llama a: <code class="nombre-funcion">ft_putstr_fd</code>, <code class="nombre-funcion">free_stacks</code>, <code class="nombre-funcion">exit</code>.</p>
+                                    <h5>Código</h5>
+                                    <pre><code class="language-c">void exit_error(t_stacks *stacks)
+{
+    ft_putstr_fd(ERROR_MSG, STDERR_FD);
+    if (stacks)
+    {
+        free_stacks(stacks);
+    }
+    exit(EXIT_FAILURE);
+}</code></pre>
+                                </div>
+                            </details>
+                        </div>
+                    </details>
+
+                    <details class="border border-[var(--color-border-primary)] rounded-md mb-4">
+                        <summary class="bg-[var(--color-bg-tertiary)] hover:bg-opacity-80 rounded-t-md">
+                             <code class="nombre-archivo">mandatory/srcs/parsing/parsing.c</code> (3/28)
+                        </summary>
+                        <div class="p-4 bg-[var(--color-bg-secondary)] rounded-b-md">
+                            <details class="function-analysis">
+                                <summary><code class="nombre-funcion">parse_arguments</code></summary>
+                                <div>
+                                    <h5>Propósito</h5>
+                                    <p>Función principal para procesar los argumentos de línea de comandos. Determina si se trata de un argumento único (string) o múltiples argumentos, y llama a la función de parsing correspondiente. También realiza la comprobación final de duplicados.</p>
+                                    <h5>Parámetros</h5>
+                                     <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-tipo">int argc</code>: Número de argumentos.</li>
+                                        <li><code class="nombre-tipo">char **argv</code>: Array de argumentos.</li>
+                                        <li><code class="nombre-struct">t_stacks *stacks</code>: Puntero a la estructura principal para almacenar la pila y el resultado de <code class="nombre-funcion">ft_split</code> si se usa.</li>
+                                    </ul>
+                                    <h5>Retorno</h5>
+                                    <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-constante">1</code>: Si el parsing y la validación son exitosos.</li>
+                                        <li><code class="nombre-constante">0</code>: Si ocurre un error (delegado a <code class="nombre-funcion">exit_error</code> por las funciones llamadas).</li>
+                                    </ul>
+                                    <h5>Lógica</h5>
+                                    <ol class="list-decimal list-inside space-y-2 pl-4 text-sm">
+                                        <li>Si <code class="nombre-tipo">argc</code> es 2 (un solo argumento después del nombre del programa):
+                                            <ul><li>Comprueba si el argumento es una cadena vacía. Si lo es, retorna 1 (éxito, no hay números).</li>
+                                            <li>Llama a <code class="nombre-funcion">parse_single_arg</code> para procesar el string.</li></ul>
+                                        </li>
+                                        <li>Si <code class="nombre-tipo">argc</code> es mayor que 2:
+                                            <ul><li>Llama a <code class="nombre-funcion">parse_multiple_args</code> para procesar cada argumento como un número.</li></ul>
+                                        </li>
+                                        <li>Si alguna de las funciones de parsing falló (aunque en este código llaman a <code class="nombre-funcion">exit_error</code> directamente), la variable <code class="nombre-tipo">success</code> sería 0 y se llamaría a <code class="nombre-funcion">exit_error</code> (redundante en esta implementación, pero podría ser útil en otras).</li>
+                                        <li>Calcula el tamaño de la <code class="nombre-pila">Pila A</code> usando <code class="nombre-funcion">get_stack_size</code> y lo guarda en <code class="nombre-campo">stacks->size_a</code>.</li>
+                                        <li>Si el tamaño es 0 pero el parsing fue exitoso (ej. <code>./push_swap ""</code>), retorna 1.</li>
+                                        <li>Si el tamaño es mayor que 0, llama a <code class="nombre-funcion">has_duplicates</code> para verificar duplicados. Si los hay, llama a <code class="nombre-funcion">exit_error</code>.</li>
+                                        <li>Si todo está bien, retorna 1.</li>
+                                    </ol>
+                                    <h5>Dependencias</h5>
+                                    <p class="text-sm">Llama a: <code class="nombre-funcion">parse_single_arg</code>, <code class="nombre-funcion">parse_multiple_args</code>, <code class="nombre-funcion">exit_error</code>, <code class="nombre-funcion">get_stack_size</code>, <code class="nombre-funcion">has_duplicates</code>.</p>
+                                    <h5>Código</h5>
+                                    <pre><code class="language-c">int parse_arguments(int argc, char **argv, t_stacks *stacks)
+{
+    int success;
+
+    success = 1;
+    if (argc == 2)
+    {
+        if (argv[1][0] == '\0') // Handle empty string argument
+            return (1);
+        success = parse_single_arg(argv[1], stacks);
+    }
+    else
+    {
+        success = parse_multiple_args(argc, argv, stacks);
+    }
+    // In this specific implementation, parse_single/multiple_args call exit_error
+    // directly on failure, so checking 'success' here is slightly redundant.
+    if (!success)
+        exit_error(stacks);
+    stacks->size_a = get_stack_size(stacks->a);
+    if (stacks->size_a == 0 && success) // Handle case like "./push_swap """
+        return (1);
+    if (stacks->size_a > 0 && has_duplicates(stacks->a))
+        exit_error(stacks); // Check for duplicates after all numbers are added
+    return (1); // Success
+}</code></pre>
+                                </div>
+                            </details>
+
+                            <details class="function-analysis">
+                                <summary><code class="nombre-funcion">is_sorted</code></summary>
+                                <div>
+                                    <h5>Propósito</h5>
+                                    <p>Verificar si una pila (lista circular) está ordenada ascendentemente según sus valores.</p>
+                                    <h5>Parámetros</h5>
+                                    <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-tipo">t_stack_node *stack</code>: Puntero a la cabeza de la pila a verificar.</li>
+                                    </ul>
+                                     <h5>Retorno</h5>
+                                    <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-constante">1</code>: Si la pila está ordenada o si está vacía o tiene un solo elemento.</li>
+                                        <li><code class="nombre-constante">0</code>: Si la pila no está ordenada.</li>
+                                    </ul>
+                                    <h5>Lógica</h5>
+                                     <ol class="list-decimal list-inside space-y-2 pl-4 text-sm">
+                                        <li>Si la pila es <code class="nombre-constante">NULL</code> o solo tiene un nodo (<code>stack->next == stack</code>), se considera ordenada y retorna 1.</li>
+                                        <li>Itera a través de la lista circular, empezando desde la cabeza.</li>
+                                        <li>En cada paso, compara el <code class="nombre-campo">value</code> del nodo actual con el <code class="nombre-campo">value</code> del siguiente nodo.</li>
+                                        <li>Si en algún punto el valor actual es mayor que el siguiente, la pila no está ordenada y retorna 0.</li>
+                                        <li>Si completa el ciclo sin encontrar ningún desorden, retorna 1.</li>
+                                    </ol>
+                                    <h5>Código</h5>
+                                    <pre><code class="language-c">int is_sorted(t_stack_node *stack)
+{
+    t_stack_node    *current;
+
+    if (!stack || stack->next == stack) // Empty or single node is sorted
+        return (1);
+    current = stack;
+    while (current->next != stack) // Iterate until the node before head
+    {
+        if (current->value > current->next->value)
+            return (0); // Not sorted
+        current = current->next;
+    }
+    return (1); // Sorted
+}</code></pre>
+                                </div>
+                            </details>
+
+                            <details class="function-analysis">
+                                <summary><code class="nombre-funcion">assign_index</code></summary>
+                                <div>
+                                    <h5>Propósito</h5>
+                                    <p>Asignar un índice relativo (0 al N-1) a cada nodo de la <code class="nombre-pila">Pila A</code> basado en su valor numérico. El nodo con el valor más pequeño obtiene índice 0, el siguiente más pequeño obtiene 1, y así sucesivamente.</p>
+                                    <h5>Parámetros</h5>
+                                     <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-tipo">t_stack_node *stack_a</code>: Puntero a la cabeza de la <code class="nombre-pila">Pila A</code>.</li>
+                                        <li><code class="nombre-tipo">int size</code>: El número total de elementos en la pila.</li>
+                                    </ul>
+                                    <h5>Lógica</h5>
+                                     <ol class="list-decimal list-inside space-y-2 pl-4 text-sm">
+                                        <li>Itera sobre cada nodo de la pila (<code class="nombre-tipo">current</code>).</li>
+                                        <li>Para cada nodo <code class="nombre-tipo">current</code>, inicializa su futuro índice (<code class="nombre-tipo">index_val</code>) a 0.</li>
+                                        <li>Realiza una segunda iteración completa sobre la pila (<code class="nombre-tipo">compare</code>).</li>
+                                        <li>Dentro del bucle interno, compara el valor del nodo <code class="nombre-tipo">compare</code> con el valor del nodo <code class="nombre-tipo">current</code>.</li>
+                                        <li>Si <code class="nombre-campo">compare->value</code> es menor que <code class="nombre-campo">current->value</code>, incrementa <code class="nombre-tipo">index_val</code>.</li>
+                                        <li>Después de comparar <code class="nombre-tipo">current</code> con todos los demás nodos, el valor final de <code class="nombre-tipo">index_val</code> representa cuántos números son más pequeños que el valor de <code class="nombre-tipo">current</code>, que es exactamente su índice relativo deseado (0-based).</li>
+                                        <li>Asigna <code class="nombre-tipo">index_val</code> al campo <code class="nombre-campo">index</code> del nodo <code class="nombre-tipo">current</code>.</li>
+                                        <li>Repite para todos los nodos de la pila.</li>
+                                    </ol>
+                                    <h5>Nota</h5>
+                                    <p class="text-sm">Este enfoque tiene una complejidad de O(N^2), donde N es el tamaño de la pila. Para pilas muy grandes, podría ser más eficiente copiar los valores a un array, ordenarlo y luego asignar los índices basados en la posición en el array ordenado (O(N log N)). Sin embargo, para los límites típicos de <code class="nombre-archivo">push_swap</code>, O(N^2) suele ser aceptable para esta fase inicial.</p>
+                                    <h5>Código</h5>
+                                    <pre><code class="language-c">void assign_index(t_stack_node *stack_a, int size)
+{
+    t_stack_node    *current;
+    t_stack_node    *compare;
+    int             index_val;
+    int             i;
+
+    if (!stack_a)
+        return ;
+    current = stack_a;
+    while (1) // Loop through each node to assign its index
+    {
+        index_val = 0; // Reset index counter for the current node
+        compare = stack_a; // Start comparison from the beginning
+        i = 0;
+        while (i < size) // Compare 'current' with all other nodes
+        {
+            if (compare->value < current->value)
+                index_val++; // Increment if 'compare' node is smaller
+            compare = compare->next;
+            i++;
+        }
+        current->index = index_val; // Assign the calculated index
+        current = current->next; // Move to the next node
+        if (current == stack_a) // Stop when we've looped back to the start
+            break ;
+    }
+}</code></pre>
+                                </div>
+                            </details>
+                        </div>
+                    </details>
+
+                    <details class="border border-[var(--color-border-primary)] rounded-md mb-4">
+                        <summary class="bg-[var(--color-bg-tertiary)] hover:bg-opacity-80 rounded-t-md">
+                             <code class="nombre-archivo">mandatory/srcs/parsing/parsing_utils.c</code> (4/28)
+                        </summary>
+                        <div class="p-4 bg-[var(--color-bg-secondary)] rounded-b-md">
+                            <details class="function-analysis">
+                                <summary><code class="nombre-funcion">is_valid_int_str</code></summary>
+                                <div>
+                                    <h5>Propósito</h5>
+                                    <p>Comprobar si una cadena de caracteres representa un número entero válido (puede tener un signo opcional al principio seguido únicamente de dígitos).</p>
+                                    <h5>Parámetros</h5>
+                                    <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-tipo">const char *str</code>: La cadena a validar.</li>
+                                    </ul>
+                                    <h5>Retorno</h5>
+                                    <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-constante">1</code>: Si la cadena es un entero válido.</li>
+                                        <li><code class="nombre-constante">0</code>: Si la cadena es <code class="nombre-constante">NULL</code>, vacía, contiene caracteres no numéricos (después del signo opcional), o si solo contiene un signo.</li>
+                                    </ul>
+                                    <h5>Lógica</h5>
+                                    <ol class="list-decimal list-inside space-y-2 pl-4 text-sm">
+                                        <li>Comprueba si la cadena es <code class="nombre-constante">NULL</code> o vacía.</li>
+                                        <li>Comprueba si el primer carácter es un signo (<code>-</code> o <code>+</code>). Si lo es, avanza al siguiente carácter y comprueba que no sea el final de la cadena.</li>
+                                        <li>Comprueba si el carácter actual (el primero o el siguiente al signo) es un dígito. Si no lo es, retorna 0.</li>
+                                        <li>Itera por el resto de la cadena. Si encuentra algún carácter que no sea un dígito, retorna 0.</li>
+                                        <li>Si llega al final de la cadena sin encontrar caracteres inválidos, retorna 1.</li>
+                                    </ol>
+                                     <h5>Dependencias</h5>
+                                     <p class="text-sm">Llama a: <code class="nombre-funcion">ft_isdigit</code> (de libft).</p>
+                                    <h5>Código</h5>
+                                    <pre><code class="language-c">int is_valid_int_str(const char *str)
+{
+    int i;
+
+    i = 0;
+    if (!str || str[0] == '\0') // Check for NULL or empty string
+        return (0);
+    if (str[i] == '-' || str[i] == '+') // Check for optional sign
+    {
+        i++;
+        if (str[i] == '\0') // String contains only a sign
+            return (0);
+    }
+    if (!ft_isdigit(str[i])) // First char (or after sign) must be digit
+        return (0);
+    while (str[i]) // Check remaining characters
+    {
+        if (!ft_isdigit(str[i]))
+            return (0); // Invalid character found
+        i++;
+    }
+    return (1); // String is a valid integer representation
+}</code></pre>
+                                </div>
+                            </details>
+
+                            <details class="function-analysis">
+                                <summary><code class="nombre-funcion">has_duplicates</code></summary>
+                                <div>
+                                    <h5>Propósito</h5>
+                                    <p>Verificar si hay valores duplicados dentro de una pila (lista circular).</p>
+                                    <h5>Parámetros</h5>
+                                    <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-tipo">t_stack_node *stack</code>: Puntero a la cabeza de la pila a verificar.</li>
+                                    </ul>
+                                    <h5>Retorno</h5>
+                                     <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-constante">1</code>: Si se encuentra al menos un valor duplicado.</li>
+                                        <li><code class="nombre-constante">0</code>: Si no hay duplicados, o si la pila está vacía o tiene un solo elemento.</li>
+                                    </ul>
+                                    <h5>Lógica</h5>
+                                     <ol class="list-decimal list-inside space-y-2 pl-4 text-sm">
+                                        <li>Si la pila es <code class="nombre-constante">NULL</code> o tiene un solo nodo, retorna 0 (no puede haber duplicados).</li>
+                                        <li>Utiliza dos bucles anidados para comparar cada nodo con todos los nodos que le siguen en la lista.
+                                            <ul><li>El bucle exterior (<code class="nombre-tipo">outer</code>) itera desde la cabeza hasta el final.</li>
+                                            <li>El bucle interior (<code class="nombre-tipo">inner</code>) empieza desde el nodo siguiente a <code class="nombre-tipo">outer</code> y también itera hasta el final.</li></ul>
+                                        </li>
+                                        <li>Dentro del bucle interior, si <code class="nombre-campo">outer->value == inner->value</code>, se ha encontrado un duplicado y retorna 1.</li>
+                                        <li>Si se completan ambos bucles sin encontrar duplicados, retorna 0.</li>
+                                    </ol>
+                                     <h5>Nota</h5>
+                                     <p class="text-sm">Este enfoque tiene una complejidad de O(N^2). Alternativamente, se podría usar una estructura de datos auxiliar (como un hash set o un árbol binario de búsqueda) para comprobar duplicados en O(N) o O(N log N) a costa de mayor uso de memoria, o ordenar una copia de los valores y comprobar elementos adyacentes (O(N log N)).</p>
+                                    <h5>Código</h5>
+                                    <pre><code class="language-c">int has_duplicates(t_stack_node *stack)
+{
+    t_stack_node    *outer;
+    t_stack_node    *inner;
+
+    if (!stack || stack->next == stack) // Empty or single node: no duplicates
+        return (0);
+    outer = stack;
+    while (1) // Outer loop iterates through each node
+    {
+        inner = outer->next; // Inner loop starts from the next node
+        while (inner != stack) // Compare outer with all subsequent nodes
+        {
+            if (outer->value == inner->value)
+                return (1); // Duplicate found
+            inner = inner->next;
+        }
+        outer = outer->next; // Move outer pointer
+        if (outer == stack) // Stop when outer loop completes a cycle
+            break ;
+    }
+    return (0); // No duplicates found
+}</code></pre>
+                                </div>
+                            </details>
+
+                             <details class="function-analysis">
+                                <summary><code class="nombre-funcion">parse_single_arg</code></summary>
+                                <div>
+                                    <h5>Propósito</h5>
+                                    <p>Procesar el caso en que todos los números se pasan como un único argumento string (ej. <code>"1 2 3"</code>).</p>
+                                    <h5>Parámetros</h5>
+                                     <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-tipo">char *arg_str</code>: La cadena que contiene los números separados por espacios.</li>
+                                        <li><code class="nombre-struct">t_stacks *stacks</code>: Puntero a la estructura principal.</li>
+                                    </ul>
+                                    <h5>Retorno</h5>
+                                     <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-constante">1</code>: Si el parsing es exitoso.</li>
+                                        <li><code class="nombre-constante">0</code>: Si ocurre un error durante el split o la validación/conversión de algún número (delegado a <code class="nombre-funcion">add_num_to_stack</code> que llama a <code class="nombre-funcion">exit_error</code>).</li>
+                                    </ul>
+                                    <h5>Lógica</h5>
+                                     <ol class="list-decimal list-inside space-y-2 pl-4 text-sm">
+                                        <li>Divide la cadena de entrada <code class="nombre-tipo">arg_str</code> en subcadenas usando el espacio como delimitador, mediante <code class="nombre-funcion">ft_split</code>. Almacena el resultado (array de strings) en <code class="nombre-campo">stacks->split_args</code>.</li>
+                                        <li>Si <code class="nombre-funcion">ft_split</code> falla (devuelve <code class="nombre-constante">NULL</code>), llama a <code class="nombre-funcion">exit_error</code>.</li>
+                                        <li>Si el resultado de <code class="nombre-funcion">ft_split</code> es un array vacío (ej. entrada <code>" "</code>), libera el array y retorna 1 (éxito, no hay números).</li>
+                                        <li>Itera sobre cada subcadena en el array <code class="nombre-campo">stacks->split_args</code>.</li>
+                                        <li>Para cada subcadena, llama a <code class="nombre-funcion">add_num_to_stack</code> para validarla, convertirla a entero, crear un nodo y añadirlo a la <code class="nombre-pila">Pila A</code>.</li>
+                                        <li>Si <code class="nombre-funcion">add_num_to_stack</code> detecta un error (formato inválido, overflow/underflow), devuelve 0 (y esta función también retornará 0, aunque <code class="nombre-funcion">add_num_to_stack</code> ya habrá llamado a <code class="nombre-funcion">exit_error</code>).</li>
+                                        <li>Si todas las subcadenas se procesan correctamente, retorna 1.</li>
+                                    </ol>
+                                    <h5>Dependencias</h5>
+                                    <p class="text-sm">Llama a: <code class="nombre-funcion">ft_split</code>, <code class="nombre-funcion">exit_error</code>, <code class="nombre-funcion">ft_free_split</code>, <code class="nombre-funcion">add_num_to_stack</code>.</p>
+                                    <h5>Código</h5>
+                                    <pre><code class="language-c">int parse_single_arg(char *arg_str, t_stacks *stacks)
+{
+    int             i;
+
+    i = 0;
+    stacks->split_args = ft_split(arg_str, ' '); // Split the string by spaces
+    if (!stacks->split_args) // Check if ft_split failed
+        exit_error(stacks);
+    // Check if split resulted in an empty array (e.g., input was only spaces)
+    if (stacks->split_args[0] == NULL)
+    {
+        ft_free_split(stacks->split_args); // Free the empty array
+        stacks->split_args = NULL;
+        return (1); // Valid input, but no numbers
+    }
+    while (stacks->split_args[i]) // Iterate through the split strings
+    {
+        // Validate, convert, create node, and add to stack A
+        if (!add_num_to_stack(stacks, stacks->split_args[i]))
+            return (0); // Error handled by add_num_to_stack calling exit_error
+        i++;
+    }
+    // Note: stacks->split_args needs to be freed later by free_stacks
+    return (1); // Success
+}</code></pre>
+                                </div>
+                            </details>
+
+                            <details class="function-analysis">
+                                <summary><code class="nombre-funcion">parse_multiple_args</code></summary>
+                                <div>
+                                    <h5>Propósito</h5>
+                                    <p>Procesar el caso en que cada número se pasa como un argumento separado en la línea de comandos (ej. <code>./push_swap 1 2 3</code>).</p>
+                                    <h5>Parámetros</h5>
+                                     <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-tipo">int argc</code>: Número total de argumentos.</li>
+                                        <li><code class="nombre-tipo">char **argv</code>: Array de argumentos.</li>
+                                         <li><code class="nombre-struct">t_stacks *stacks</code>: Puntero a la estructura principal.</li>
+                                    </ul>
+                                    <h5>Retorno</h5>
+                                     <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-constante">1</code>: Si el parsing es exitoso.</li>
+                                        <li><code class="nombre-constante">0</code>: Si ocurre un error durante la validación/conversión de algún número (delegado a <code class="nombre-funcion">add_num_to_stack</code>).</li>
+                                    </ul>
+                                    <h5>Lógica</h5>
+                                     <ol class="list-decimal list-inside space-y-2 pl-4 text-sm">
+                                        <li>Itera sobre los argumentos de la línea de comandos, empezando desde el índice 1 (saltando el nombre del programa, <code class="nombre-campo">argv[0]</code>) hasta <code class="nombre-tipo">argc - 1</code>.</li>
+                                        <li>Para cada argumento <code class="nombre-campo">argv[i]</code>, llama a <code class="nombre-funcion">add_num_to_stack</code> para validarlo, convertirlo, crear un nodo y añadirlo a la <code class="nombre-pila">Pila A</code>.</li>
+                                        <li>Si <code class="nombre-funcion">add_num_to_stack</code> falla, retorna 0 (el error ya fue manejado por <code class="nombre-funcion">exit_error</code>).</li>
+                                        <li>Si todos los argumentos se procesan correctamente, retorna 1.</li>
+                                    </ol>
+                                     <h5>Dependencias</h5>
+                                     <p class="text-sm">Llama a: <code class="nombre-funcion">add_num_to_stack</code>.</p>
+                                    <h5>Código</h5>
+                                    <pre><code class="language-c">int parse_multiple_args(int argc, char **argv, t_stacks *stacks)
+{
+    int             i;
+
+    i = 1; // Start from the first actual argument (index 1)
+    while (i < argc)
+    {
+        // Validate, convert, create node, and add to stack A for each argument
+        if (!add_num_to_stack(stacks, argv[i]))
+            return (0); // Error handled by add_num_to_stack calling exit_error
+        i++;
+    }
+    return (1); // Success
+}</code></pre>
+                                </div>
+                            </details>
+                        </div>
+                    </details>
+
+                    <details class="border border-[var(--color-border-primary)] rounded-md mb-4">
+                         <summary class="bg-[var(--color-bg-tertiary)] hover:bg-opacity-80 rounded-t-md">
+                             <code class="nombre-archivo">mandatory/srcs/parsing/parsing_utils_helpers.c</code> (5/28)
+                         </summary>
+                         <div class="p-4 bg-[var(--color-bg-secondary)] rounded-b-md">
+                             <details class="function-analysis">
+                                 <summary><code class="nombre-funcion">add_num_to_stack</code></summary>
+                                 <div>
+                                     <h5>Propósito</h5>
+                                     <p>Validar una cadena como entero, convertirla, crear un nuevo nodo <code class="nombre-struct">t_stack_node</code> con ese valor y añadirlo al final de la <code class="nombre-pila">Pila A</code>.</p>
+                                     <h5>Parámetros</h5>
+                                     <ul class="list-disc list-inside pl-4 text-sm">
+                                         <li><code class="nombre-struct">t_stacks *stacks</code>: Puntero a la estructura principal (necesario para la gestión de errores y para acceder a la pila A).</li>
+                                         <li><code class="nombre-tipo">const char *num_str</code>: La cadena que representa el número a añadir.</li>
+                                     </ul>
+                                     <h5>Retorno</h5>
+                                     <ul class="list-disc list-inside pl-4 text-sm">
+                                         <li><code class="nombre-constante">1</code>: Si el número es válido, se convierte, se crea el nodo y se añade a la pila correctamente.</li>
+                                         <li><code class="nombre-constante">0</code>: Si la cadena no es un entero válido o si el número está fuera del rango <code class="nombre-constante">INT_MAX</code>/<code class="nombre-constante">INT_MIN</code> (en estos casos, llama a <code class="nombre-funcion">exit_error</code> antes de retornar).</li>
+                                     </ul>
+                                     <h5>Lógica</h5>
+                                     <ol class="list-decimal list-inside space-y-2 pl-4 text-sm">
+                                         <li>Valida si la cadena <code class="nombre-tipo">num_str</code> representa un entero usando <code class="nombre-funcion">is_valid_int_str</code>. Si no, retorna 0 (error).</li>
+                                         <li>Convierte la cadena a <code class="nombre-tipo">long</code> usando <code class="nombre-funcion">ft_atol</code>. Se usa <code class="nombre-tipo">long</code> para detectar *overflow/underflow* del tipo <code class="nombre-tipo">int</code>.</li>
+                                         <li>Comprueba si el valor <code class="nombre-tipo">long</code> resultante (<code class="nombre-tipo">num_l</code>) es igual a <code class="nombre-constante">LLONG_MAX</code> o <code class="nombre-constante">LLONG_MIN</code> (indicando error en <code class="nombre-funcion">ft_atol</code>) o si es mayor que <code class="nombre-constante">INT_MAX</code> o menor que <code class="nombre-constante">INT_MIN</code>. Si alguna condición se cumple, retorna 0 (error).</li>
+                                         <li>Si el número es válido y está en rango, crea un nuevo nodo usando <code class="nombre-funcion">new_node</code>, casteando el valor <code class="nombre-tipo">long</code> a <code class="nombre-tipo">int</code>.</li>
+                                         <li>Si la creación del nodo falla (<code class="nombre-funcion">new_node</code> devuelve <code class="nombre-constante">NULL</code>, probablemente por fallo de <code class="nombre-funcion">malloc</code>), llama a <code class="nombre-funcion">exit_error</code>.</li>
+                                         <li>Añade el nuevo nodo al final de la <code class="nombre-pila">Pila A</code> usando <code class="nombre-funcion">add_node_back</code>.</li>
+                                         <li>Retorna 1 (éxito).</li>
+                                     </ol>
+                                     <h5>Dependencias</h5>
+                                     <p class="text-sm">Llama a: <code class="nombre-funcion">is_valid_int_str</code>, <code class="nombre-funcion">ft_atol</code>, <code class="nombre-funcion">new_node</code>, <code class="nombre-funcion">exit_error</code>, <code class="nombre-funcion">add_node_back</code>.</p>
+                                     <h5>Código</h5>
+                                     <pre><code class="language-c">int add_num_to_stack(t_stacks *stacks, const char *num_str)
+{
+    long            num_l;
+    t_stack_node    *node;
+
+    if (!is_valid_int_str(num_str)) // 1. Validate format
+        return (0);
+    num_l = ft_atol(num_str); // 2. Convert to long
+    // 3. Check for overflow/underflow
+    if (num_l == LLONG_MAX || num_l == LLONG_MIN ||
+        num_l > INT_MAX || num_l < INT_MIN)
+        return (0);
+    node = new_node((int)num_l); // 4. Create node
+    if (!node) // 5. Check node creation
+        exit_error(stacks); // Exit if malloc failed
+    add_node_back(&(stacks->a), node); // 6. Add node to stack A
+    return (1); // Success
+}</code></pre>
+                                 </div>
+                             </details>
+                         </div>
+                     </details>
+
+                    <div class="task-placeholder mt-8">
+                         <p>Análisis del archivo <code class="nombre-archivo">mandatory/srcs/parsing/parsing_utils_helpers.c</code> completado (5/28). El siguiente archivo a analizar sería <code class="nombre-archivo">mandatory/srcs/stack/stack_utils.c</code>.</p>
+                    </div>
+                </section>
+
+                <section id="tarea-2" class="content-section">
+                     <h2 class="border-b-0 pb-0 mb-6">Prueba de Concepto UI/UX (Refinada)</h2>
+                    <p class="text-[var(--color-text-secondary)]">
+                        Esta sección demuestra los principios de diseño <strong>UI/UX</strong> refinados aplicados a esta documentación. El objetivo es establecer una base visual <strong>premium</strong>, <strong>coherente</strong> y <strong>accesible</strong> antes de profundizar en el contenido técnico.
+                    </p>
+
+                    <h3 class="text-lg font-semibold mb-4">Paleta de Colores y Estilo</h3>
+                    <p>Se ha implementado una paleta oscura sofisticada utilizando <strong>variables CSS</strong> (simulando <code class="concepto-clave">design tokens</code>) para mayor consistencia y mantenibilidad. Observa cómo se usan variables como <code class="nombre-constante">var(--color-bg-primary)</code> o <code class="nombre-constante">var(--color-accent-primary)</code> en los estilos.</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div class="p-4 rounded-md border border-[var(--color-border-primary)]" style="background-color: var(--color-bg-primary);"><span class="block text-xs text-[var(--color-text-tertiary)] mb-1">BG Primary</span><span class="font-medium text-[var(--color-text-primary)]">#0D1117</span></div>
+                        <div class="p-4 rounded-md border border-[var(--color-border-primary)]" style="background-color: var(--color-bg-secondary);"><span class="block text-xs text-[var(--color-text-tertiary)] mb-1">BG Secondary</span><span class="font-medium text-[var(--color-text-primary)]">#161B22</span></div>
+                        <div class="p-4 rounded-md border border-[var(--color-border-primary)]" style="background-color: var(--color-bg-tertiary);"><span class="block text-xs text-[var(--color-text-tertiary)] mb-1">BG Tertiary</span><span class="font-medium text-[var(--color-text-primary)]">#21262D</span></div>
+                        <div class="p-4 rounded-md border border-[var(--color-border-primary)]" style="background-color: var(--color-accent-primary);"><span class="block text-xs text-blue-100 mb-1">Accent</span><span class="font-medium text-white">#58a6ff</span></div>
+                    </div>
+
+                    <h3 class="text-lg font-semibold mb-4">Tipografía y Espaciado</h3>
+                    <p>Se utiliza la fuente <strong>'Inter'</strong> con una jerarquía clara (definida en los estilos para <code>h1</code>-<code>h6</code>) y espaciado generoso (<code class="nombre-campo">line-height: 1.65</code>, márgenes amplios) para mejorar la legibilidad y crear una sensación de amplitud. La propiedad <code class="nombre-campo">max-width: 75ch</code> en los párrafos limita la longitud de línea para una lectura cómoda.</p>
+                    <pre><code class="language-css">/* Ejemplo de estilos base (ver <style> tag) */
+body {
+    font-family: var(--font-family-sans); /* Fuente 'Inter' */
+    background-color: var(--color-bg-primary); /* Fondo principal oscuro */
+    color: var(--color-text-secondary); /* Color de texto secundario */
+    line-height: 1.65; /* Altura de línea para legibilidad */
+}
+h2 {
+    font-size: 1.75rem; /* Tamaño para encabezados de segundo nivel */
+    margin-top: 2.5rem; /* Espacio superior */
+    border-bottom: 1px solid var(--color-border-primary); /* Línea separadora */
+    /* ... */
+}
+p {
+    margin-bottom: 1.25rem; /* Espacio inferior */
+    max-width: 75ch; /* Longitud de línea óptima */
+}</code></pre>
+
+                    <h3 class="text-lg font-semibold mb-4 mt-6">Componentes Interactivos</h3>
+                    <p>A continuación se muestran ejemplos de componentes clave con sus <strong>estados visuales</strong> definidos (normal, <code>:hover</code>, <code>:focus-visible</code>, <code>:active</code>, <code>:disabled</code>) para proporcionar feedback claro al usuario:</p>
+
+                    <div class="mb-6">
+                        <h4 class="font-medium mb-3 text-[var(--color-text-primary)]">Botones</h4>
+                        <p>Se definen clases como <code class="nombre-tipo">.button</code>, <code class="nombre-tipo">.button-primary</code>, <code class="nombre-tipo">.button-secondary</code>, <code class="nombre-tipo">.button-destructive</code>.</p>
+                        <div class="flex flex-wrap gap-4 items-center mb-4 p-4 border border-[var(--color-border-primary)] rounded-md bg-[var(--color-bg-primary)]">
+                            <button class="button button-primary">Primario</button>
+                            <button class="button button-primary hover:bg-[var(--color-accent-hover)]">Hover</button>
+                            <button class="button button-primary focus-visible:ring">Focus</button>
+                            <button class="button button-primary active:bg-[var(--color-accent-active)]">Active</button>
+                            <button class="button button-primary" disabled>Disabled</button>
+                        </div>
+                         <div class="flex flex-wrap gap-4 items-center mb-4 p-4 border border-[var(--color-border-primary)] rounded-md bg-[var(--color-bg-primary)]">
+                            <button class="button button-secondary">Secundario</button>
+                            <button class="button button-secondary hover:border-[var(--color-border-secondary)] hover:bg-[#2a2f37]">Hover</button>
+                            <button class="button button-secondary focus-visible:ring">Focus</button>
+                            <button class="button button-secondary active:bg-[#30363d]">Active</button>
+                            <button class="button button-secondary" disabled>Disabled</button>
+                        </div>
+                         <div class="flex flex-wrap gap-4 items-center p-4 border border-[var(--color-border-primary)] rounded-md bg-[var(--color-bg-primary)]">
+                            <button class="button button-destructive">Destructivo</button>
+                            <button class="button button-destructive hover:bg-[#da3633]">Hover</button>
+                            <button class="button button-destructive focus-visible:ring">Focus</button>
+                            <button class="button button-destructive active:bg-[#b9251a]">Active</button>
+                            <button class="button button-destructive" disabled>Disabled</button>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <h4 class="font-medium mb-3 text-[var(--color-text-primary)]">Campo de Entrada</h4>
+                        <p>Estilo para elementos <code>&lt;input&gt;</code> con la clase <code class="nombre-tipo">.input-field</code>.</p>
+                        <div class="p-4 border border-[var(--color-border-primary)] rounded-md bg-[var(--color-bg-primary)]">
+                            <label for="example-input-swapped" class="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">Etiqueta de Ejemplo</label>
+                            <input type="text" id="example-input-swapped" class="input-field" placeholder="Escribe algo aquí...">
+                            <input type="text" id="example-input-disabled-swapped" class="input-field mt-4" placeholder="Campo deshabilitado" disabled>
+                        </div>
+                    </div>
+
+                     <div class="mb-6">
+                        <h4 class="font-medium mb-3 text-[var(--color-text-primary)]">Sección Colapsable (<code>&lt;details&gt;</code>/<code>&lt;summary&gt;</code>)</h4>
+                        <p>Se mejora el estilo por defecto del navegador para los elementos <code>&lt;details&gt;</code> y <code>&lt;summary&gt;</code>, añadiendo un icono de chevron y transiciones.</p>
+                        <details>
+                            <summary>Haz clic para expandir/colapsar</summary>
+                            <div>
+                                <p>Este es el contenido detallado. El estilo ha sido mejorado para integrarse con la paleta de colores y ofrecer una mejor experiencia visual. Se utiliza <strong>Font Awesome</strong> para el icono.</p>
+                                <pre><code class="language-html">&lt;details&gt;
+    &lt;summary&gt;Título&lt;/summary&gt;
+    &lt;div&gt;Contenido...&lt;/div&gt;
+&lt;/details&gt;</code></pre>
+                            </div>
+                        </details>
+                    </div>
+
+                    <h3 class="text-lg font-semibold mb-4 mt-6">Microinteracciones y Feedback</h3>
+                    <p>Se han añadido <strong>transiciones CSS</strong> suaves (<code class="nombre-campo">transition: ... ease</code>) y efectos <code>:hover</code> / <code>:focus-visible</code> / <code>:active</code> a los elementos interactivos para proporcionar <code class="concepto-clave">feedback visual claro</code> y mejorar la sensación de calidad y respuesta de la interfaz.</p>
+
+                    <h3 class="text-lg font-semibold mb-4 mt-6">Accesibilidad (Contraste)</h3>
+                    <p>Se ha prestado atención a los <code class="concepto-clave">ratios de contraste</code> entre texto y fondo para cumplir al menos con los criterios <strong>WCAG AA</strong>, asegurando la legibilidad para un mayor número de usuarios, incluyendo aquellos con discapacidades visuales. Por ejemplo, el texto primario (<code class="nombre-constante">--color-text-primary</code>: <code>#e6edf3</code>) sobre el fondo secundario (<code class="nombre-constante">--color-bg-secondary</code>: <code>#161B22</code>) tiene un ratio de contraste alto.</p>
+                     <div class="flex space-x-4 text-sm">
+                        <span class="p-2 rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] border border-[var(--color-border-primary)]">Texto Primario sobre Secundario</span>
+                        <span class="p-2 rounded bg-[var(--color-accent-primary)] text-[var(--color-accent-text)] border border-[var(--color-accent-primary)]">Texto Blanco sobre Acento</span>
+                    </div>
+                </section>
+
+                <section id="tarea-5" class="content-section">
+                    <h2 class="border-b border-[var(--color-border-primary)] pb-2 mb-4">Tarea 5: Traza de Ejecución Detallada (Ejemplo N=10)</h2>
+                    <div class="task-placeholder">
+                        <p>Se incluirá una traza detallada con un ejemplo de 10 números, mostrando el estado de las pilas y las operaciones en cada paso significativo.</p>
+                    </div>
+                </section>
+
+                <section id="tarea-6" class="content-section">
+                     <h2 class="border-b border-[var(--color-border-primary)] pb-2 mb-4">Tarea 6: Expansión de Análisis (Ops, Estado, Bonus, Makefile)</h2>
+                     <div class="task-placeholder">
+                          <p>Se detallarán las operaciones, la gestión del estado, el funcionamiento del <code>checker</code> (bonus) y se analizará el <code>Makefile</code>.</p>
+                     </div>
+                </section>
+
+                <section id="tarea-7" class="content-section">
+                    <h2 class="border-b border-[var(--color-border-primary)] pb-2 mb-4">Tarea 7: Explorador de Código Fuente Mejorado</h2>
+                    <div class="task-placeholder">
+                        <p>Se organizará y presentará el código fuente completo (<code>.h</code>, <code>.c</code>, <code>Makefile</code>) con comentarios adicionales y análisis de fragmentos clave.</p>
+                    </div>
+                </section>
+
+                <section id="glosario" class="content-section">
+                    <h2 class="border-b border-[var(--color-border-primary)] pb-2 mb-4">Glosario de Términos</h2>
+                    <dl class="space-y-4 text-sm">
+                        <div>
+                            <dt class="font-semibold text-[var(--color-text-primary)]"><code class="nombre-campo">value</code></dt>
+                            <dd class="ml-4 text-[var(--color-text-secondary)]">El número entero original proporcionado como entrada.</dd>
+                        </div>
+                        <div>
+                            <dt class="font-semibold text-[var(--color-text-primary)]"><code class="nombre-campo">index</code></dt>
+                            <dd class="ml-4 text-[var(--color-text-secondary)]">Un número entero asignado a cada <code class="nombre-campo">value</code>, que representa su posición relativa en el conjunto ordenado (0 para el más pequeño, N-1 para el más grande). Simplifica las comparaciones.</dd>
+                        </div>
+                        <div>
+                            <dt class="font-semibold text-[var(--color-text-primary)]"><code class="nombre-campo">pos</code> (Posición)</dt>
+                            <dd class="ml-4 text-[var(--color-text-secondary)]">La posición actual de un nodo dentro de su pila (0 para el nodo superior, 1 para el siguiente, etc.). Cambia dinámicamente con las operaciones.</dd>
+                        </div>
+                        <div>
+                            <dt class="font-semibold text-[var(--color-text-primary)]"><code class="nombre-campo">target_pos</code> (Posición Objetivo)</dt>
+                            <dd class="ml-4 text-[var(--color-text-secondary)]">La posición calculada en la pila <em>destino</em> donde un nodo debería ser insertado para mantener el orden relativo de los elementos ya presentes en esa pila destino.</dd>
+                        </div>
+                        <div>
+                            <dt class="font-semibold text-[var(--color-text-primary)]"><code class="nombre-campo">cost_a</code> / <code class="nombre-campo">cost_b</code> (Coste)</dt>
+                            <dd class="ml-4 text-[var(--color-text-secondary)]">El número mínimo de operaciones de rotación (<code class="nombre-operacion">ra</code>/<code class="nombre-operacion">rra</code> o <code class="nombre-operacion">rb</code>/<code class="nombre-operacion">rrb</code>) necesarias para llevar un nodo específico (o su posición objetivo) a la cima de la pila correspondiente. Un coste positivo indica rotaciones normales (<code class="nombre-operacion">r</code>), y uno negativo indica rotaciones inversas (<code class="nombre-operacion">rr</code>).</dd>
+                        </div>
+                         <div>
+                            <dt class="font-semibold text-[var(--color-text-primary)]"><code class="concepto-clave">Lista Doblemente Enlazada Circular</code></dt>
+                            <dd class="ml-4 text-[var(--color-text-secondary)]">Estructura de datos donde cada nodo apunta al nodo siguiente y al anterior, y el último nodo apunta al primero (y viceversa). Ideal para operaciones de rotación eficientes (O(1)).</dd>
+                        </div>
+                        <div>
+                            <dt class="font-semibold text-[var(--color-text-primary)]"><code class="concepto-clave">Turk Algorithm</code></dt>
+                            <dd class="ml-4 text-[var(--color-text-secondary)]">Nombre común (en el contexto de 42) para la heurística de ordenación utilizada en <code class="nombre-archivo">push_swap</code>, que implica mover elementos a la <code class="nombre-pila">Pila B</code> basándose en costes calculados y luego devolverlos ordenadamente a la <code class="nombre-pila">Pila A</code>.</dd>
+                        </div>
+                         <div>
+                            <dt class="font-semibold text-[var(--color-text-primary)]"><code class="concepto-clave">Heurística</code></dt>
+                            <dd class="ml-4 text-[var(--color-text-secondary)]">Un enfoque o algoritmo que busca encontrar una buena solución (eficiente, en este caso) a un problema, pero sin garantizar que sea la solución óptima absoluta. Se basa en reglas o cálculos para tomar decisiones "inteligentes" en cada paso.</dd>
+                        </div>
+                    </dl>
+                </section>
+
+                <section id="uso" class="content-section">
+                    <h2 class="border-b border-[var(--color-border-primary)] pb-2 mb-4">Cómo Usar</h2>
+                    <p>Una vez que tengas el código fuente del proyecto (incluyendo el <code class="nombre-archivo">Makefile</code> y la <code class="nombre-archivo">libft</code>), puedes compilarlo y ejecutarlo desde tu terminal.</p>
+
+                    <h4 class="font-medium mb-2 text-[var(--color-text-primary)]">Compilación</h4>
+                    <ul class="list-disc list-inside space-y-1 mb-4 pl-4 text-sm">
+                        <li>Para compilar el programa principal <code class="nombre-archivo">push_swap</code>:
+                            <pre><code class="language-bash">make</code></pre>
+                        </li>
+                        <li>Para compilar el verificador <code class="nombre-archivo">checker</code> (parte bonus):
+                            <pre><code class="language-bash">make bonus</code></pre>
+                        </li>
+                         <li>Para limpiar los archivos objeto (<code>.o</code>):
+                            <pre><code class="language-bash">make clean</code></pre>
+                        </li>
+                         <li>Para eliminar los archivos objeto y los ejecutables:
+                            <pre><code class="language-bash">make fclean</code></pre>
+                        </li>
+                         <li>Para recompilar todo desde cero:
+                            <pre><code class="language-bash">make re</code></pre>
+                        </li>
+                    </ul>
+
+                    <h4 class="font-medium mb-2 text-[var(--color-text-primary)]">Ejecución</h4>
+                    <p>El programa <code class="nombre-archivo">push_swap</code> toma una lista de números enteros como argumentos y debe imprimir en la salida estándar la secuencia de operaciones más corta que los ordena.</p>
+                    <ul class="list-disc list-inside space-y-1 mb-4 pl-4 text-sm">
+                        <li><strong>Argumentos múltiples:</strong>
+                            <pre><code class="language-bash">./push_swap 4 67 3 8 0 -2</code></pre>
+                        </li>
+                        <li><strong>Argumento único (string):</strong>
+                             <pre><code class="language-bash">./push_swap "4 67 3 8 0 -2"</code></pre>
+                        </li>
+                    </ul>
+                     <p>El verificador <code class="nombre-archivo">checker</code> lee la lista de números iniciales como argumentos y luego lee las operaciones desde la entrada estándar. Al final, imprime "OK" si la pila queda ordenada o "KO" si no.</p>
+                     <ul class="list-disc list-inside space-y-1 mb-4 pl-4 text-sm">
+                         <li><strong>Uso típico con pipe:</strong>
+                             <pre><code class="language-bash">ARG="4 67 3 8 0 -2"; ./push_swap $ARG | ./checker $ARG</code></pre>
+                             <p class="text-xs text-[var(--color-text-tertiary)] mt-1">Esto ejecuta <code class="nombre-archivo">push_swap</code>, envía su salida (las operaciones) al <code class="nombre-archivo">checker</code>, que verifica si la secuencia ordena correctamente la lista inicial.</p>
+                         </li>
+                         <li><strong>Uso interactivo (introduciendo operaciones manualmente):</strong>
+                             <pre><code class="language-bash">./checker 4 67 3 8 0 -2
+# Escribe operaciones aquí (ej: sa, pb, ra...) y presiona Enter
+# Termina con Ctrl+D</code></pre>
+                         </li>
+                     </ul>
+                     <p><strong>Casos de Error:</strong> Si proporcionas argumentos inválidos (no números, duplicados, fuera del rango de <code class="nombre-tipo">int</code>), tanto <code class="nombre-archivo">push_swap</code> como <code class="nombre-archivo">checker</code> deben imprimir "Error" en la salida de error estándar.</p>
+                     <pre><code class="language-bash">./push_swap 1 2 3 1 # Error: duplicado
+./push_swap 1 2 hola # Error: no es un número
+./push_swap 2147483648 # Error: fuera de rango</code></pre>
+
+                </section>
+
+            </main>
+        </div>
+    </div>
+    <footer class="bg-[var(--color-bg-secondary)] text-[var(--color-text-tertiary)] p-6 mt-0 text-center text-sm border-t border-[var(--color-border-primary)]">
+        <div class="container mx-auto max-w-6xl">
+            Documentación generada para el proyecto Push_Swap. Barcelona, 2025.
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Documentación Push_Swap v1.2 (fix 18 - Tarea 4 stack_utils.c) cargada.'); // Updated version log
+
+            const menuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const sidebarNav = document.getElementById('sidebar-nav');
+            const sections = document.querySelectorAll('main section[id]'); // Select sections with IDs in main
+
+            // Mobile menu toggle logic
+            if (menuButton && mobileMenu) {
+                menuButton.addEventListener('click', (event) => {
+                   event.stopPropagation();
+                   mobileMenu.classList.toggle('hidden');
+                });
+            }
+
+            // Smooth scrolling for internal links (both header, mobile menu and sidebar)
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    if(targetElement) {
+                        // Close mobile menu if open before scrolling
+                        if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+                           mobileMenu.classList.add('hidden');
+                        }
+
+                        const headerOffset = document.querySelector('header').offsetHeight || 64;
+                        const elementPosition = targetElement.getBoundingClientRect().top;
+                        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+                        window.scrollTo({
+                            top: offsetPosition,
+                            behavior: "smooth"
+                        });
+                    }
+                });
+            });
+
+             // Close mobile menu if clicking outside of it
+             document.addEventListener('click', function(event) {
+                if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+                    const isClickInsideMenu = mobileMenu.contains(event.target);
+                    const isClickOnButton = menuButton.contains(event.target);
+                    if (!isClickInsideMenu && !isClickOnButton) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                }
+            });
+
+            // Sidebar active link highlighting on scroll
+            const observerOptions = {
+              root: null,
+              rootMargin: '-64px 0px -50% 0px',
+              threshold: 0
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+              let lastIntersectingLink = null;
+
+              entries.forEach(entry => {
+                const id = entry.target.getAttribute('id');
+                const sidebarLink = sidebarNav?.querySelector(`a[href="#${id}"]`);
+
+                if (entry.isIntersecting && sidebarLink) {
+                     lastIntersectingLink = sidebarLink;
+                }
+              });
+
+              sidebarNav?.querySelectorAll('a').forEach(link => link.classList.remove('active'));
+              if(lastIntersectingLink) {
+                  lastIntersectingLink.classList.add('active');
+              } else if (window.scrollY < 100 && sidebarNav) { // Highlight first link if near top
+                 const firstLink = sidebarNav.querySelector('a');
+                 // Check if the first link actually points to the first section
+                 if (firstLink && firstLink.getAttribute('href') === `#${sections[0]?.id}`) {
+                    firstLink.classList.add('active');
+                 }
+              }
+
+            }, observerOptions);
+
+            sections.forEach(section => {
+              observer.observe(section);
+            });
+
+        });
+    </script>
+
+</body>
+</html>
