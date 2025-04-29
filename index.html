@@ -1413,6 +1413,197 @@ int main(int argc, char **argv) {
                              </details>
                          </div>
                      </details>
+                     <details class="border border-[var(--color-border-primary)] rounded-md mb-4">
+                        <summary class="bg-[var(--color-bg-tertiary)] hover:bg-opacity-80 rounded-t-md p-3 cursor-pointer flex justify-between items-center">
+                            <span><code class="nombre-archivo">mandatory/srcs/stack/stack_utils.c</code> (6/28)</span>
+                            <i class="fas fa-chevron-down text-xs text-[var(--color-text-tertiary)] transition-transform duration-200"></i>
+                        </summary>
+                        <div class="p-4 bg-[var(--color-bg-secondary)] rounded-b-md">
+            
+                            <details class="function-analysis">
+                                <summary><code class="nombre-funcion">new_node</code></summary>
+                                <div>
+                                    <h5>Propósito</h5>
+                                    <p>Crear y inicializar un nuevo nodo (<code class="nombre-struct">t_stack_node</code>) para ser añadido a una de las pilas.</p>
+                                    <h5>Parámetros</h5>
+                                    <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-tipo">int value</code>: El valor entero que contendrá el nuevo nodo.</li>
+                                    </ul>
+                                    <h5>Retorno</h5>
+                                    <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-tipo">t_stack_node *</code>: Un puntero al nodo recién creado y inicializado.</li>
+                                        <li><code class="nombre-constante">NULL</code>: Si falla la asignación de memoria (<code class="nombre-funcion">malloc</code>).</li>
+                                    </ul>
+                                    <h5>Lógica</h5>
+                                    <ol class="list-decimal list-inside space-y-2 pl-4 text-sm">
+                                        <li>Reserva memoria del tamaño de <code class="nombre-struct">t_stack_node</code> usando <code class="nombre-funcion">malloc</code>.</li>
+                                        <li>Si <code class="nombre-funcion">malloc</code> falla, retorna <code class="nombre-constante">NULL</code>.</li>
+                                        <li>Asigna el <code class="nombre-campo">value</code> proporcionado al campo <code class="nombre-campo">value</code> del nodo.</li>
+                                        <li>Inicializa todos los demás campos a valores por defecto o inválidos (<code class="nombre-campo">index</code>, <code class="nombre-campo">pos</code>, <code class="nombre-campo">target_pos</code>, <code class="nombre-campo">cost_a</code>, <code class="nombre-campo">cost_b</code> a -1).</li>
+                                        <li>Configura los punteros <code class="nombre-campo">prev</code> y <code class="nombre-campo">next</code> para que apunten al propio nodo. Esto lo prepara como un nodo independiente que puede ser insertado en una lista circular (donde inicialmente será el único elemento).</li>
+                                        <li>Retorna el puntero al nodo creado.</li>
+                                    </ol>
+                                    <h5>Dependencias</h5>
+                                    <p class="text-sm">Llama a: <code class="nombre-funcion">malloc</code>.</p>
+                                    <h5>Código</h5>
+                                    <pre><code class="language-c">t_stack_node    *new_node(int value)
+            {
+                t_stack_node    *node;
+            
+                node = (t_stack_node *)malloc(sizeof(t_stack_node));
+                if (!node)
+                    return (NULL);
+                node->value = value;
+                node->index = -1;
+                node->pos = -1;
+                node->target_pos = -1;
+                node->cost_a = -1;
+                node->cost_b = -1;
+                node->prev = node; // Point to self for circular list initialization
+                node->next = node; // Point to self for circular list initialization
+                return (node);
+            }</code></pre>
+                                </div>
+                            </details>
+            
+                            <details class="function-analysis">
+                                <summary><code class="nombre-funcion">add_node_back</code></summary>
+                                <div>
+                                    <h5>Propósito</h5>
+                                    <p>Añadir un nodo existente al final (la "parte trasera" o "bottom") de una pila implementada como lista doblemente enlazada circular.</p>
+                                    <h5>Parámetros</h5>
+                                    <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-tipo">t_stack_node **stack</code>: Doble puntero a la cabeza de la pila. Se necesita doble puntero para modificar la cabeza si la pila estaba vacía.</li>
+                                        <li><code class="nombre-tipo">t_stack_node *node</code>: Puntero al nodo que se va a añadir.</li>
+                                    </ul>
+                                    <h5>Lógica</h5>
+                                    <ol class="list-decimal list-inside space-y-2 pl-4 text-sm">
+                                        <li>Comprueba si el doble puntero <code class="nombre-tipo">stack</code> o el puntero <code class="nombre-tipo">node</code> son <code class="nombre-constante">NULL</code>. Si es así, no hace nada.</li>
+                                        <li>Si la pila está vacía (<code>*stack == NULL</code>):
+                                            <ul><li>El nuevo nodo se convierte en la cabeza de la pila (<code>*stack = node</code>). Como el nodo ya apunta a sí mismo (<code class="nombre-campo">prev</code> y <code class="nombre-campo">next</code>), la lista circular de un elemento queda correctamente formada.</li></ul>
+                                        </li>
+                                        <li>Si la pila no está vacía:
+                                            <ul>
+                                                <li>Obtiene el nodo actual que está al final (la "cola") accediendo a <code class="nombre-campo">(*stack)->prev</code>.</li>
+                                                <li>Actualiza los punteros para insertar el nuevo nodo entre la cola actual y la cabeza:
+                                                    <ul>
+                                                        <li><code>tail->next = node;</code> (El siguiente de la antigua cola es el nuevo nodo)</li>
+                                                        <li><code>node->prev = tail;</code> (El anterior del nuevo nodo es la antigua cola)</li>
+                                                        <li><code>node->next = *stack;</code> (El siguiente del nuevo nodo es la cabeza)</li>
+                                                        <li><code>(*stack)->prev = node;</code> (El anterior de la cabeza es el nuevo nodo, que ahora es la nueva cola)</li>
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                        </li>
+                                    </ol>
+                                     <h5>Dependencias</h5>
+                                    <p class="text-sm">Ninguna función externa llamada.</p>
+                                   <h5>Código</h5>
+                                    <pre><code class="language-c">void    add_node_back(t_stack_node **stack, t_stack_node *node)
+            {
+                t_stack_node    *tail;
+            
+                if (!stack || !node)
+                    return ;
+                if (*stack == NULL) // If stack is empty
+                {
+                    *stack = node; // The new node becomes the head
+                    // node->prev and node->next already point to node itself from new_node
+                }
+                else // If stack is not empty
+                {
+                    tail = (*stack)->prev; // Get the current tail node
+                    tail->next = node;     // Link current tail's next to the new node
+                    node->prev = tail;     // Link new node's prev to the current tail
+                    node->next = *stack;   // Link new node's next to the head
+                    (*stack)->prev = node; // Link head's prev to the new node (new tail)
+                }
+            }</code></pre>
+                                </div>
+                            </details>
+            
+                            <details class="function-analysis">
+                                <summary><code class="nombre-funcion">get_stack_bottom</code></summary>
+                                <div>
+                                    <h5>Propósito</h5>
+                                    <p>Obtener un puntero al último nodo (el nodo "bottom" o "tail") de la pila circular.</p>
+                                    <h5>Parámetros</h5>
+                                    <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-tipo">t_stack_node *stack</code>: Puntero a la cabeza de la pila.</li>
+                                    </ul>
+                                    <h5>Retorno</h5>
+                                     <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-tipo">t_stack_node *</code>: Puntero al último nodo de la pila.</li>
+                                        <li><code class="nombre-constante">NULL</code>: Si la pila está vacía (<code class="nombre-constante">NULL</code>).</li>
+                                    </ul>
+                                    <h5>Lógica</h5>
+                                    <ol class="list-decimal list-inside space-y-2 pl-4 text-sm">
+                                        <li>Comprueba si la pila es <code class="nombre-constante">NULL</code>. Si lo es, retorna <code class="nombre-constante">NULL</code>.</li>
+                                        <li>En una lista doblemente enlazada circular, el puntero <code class="nombre-campo">prev</code> del nodo cabeza apunta directamente al último nodo. Retorna <code class="nombre-campo">stack->prev</code>.</li>
+                                    </ol>
+                                     <h5>Dependencias</h5>
+                                    <p class="text-sm">Ninguna función externa llamada.</p>
+                                    <h5>Código</h5>
+                                    <pre><code class="language-c">t_stack_node    *get_stack_bottom(t_stack_node *stack)
+            {
+                if (!stack)
+                    return (NULL);
+                // In a circular doubly linked list, the head's previous node is the tail
+                return (stack->prev);
+            }</code></pre>
+                                </div>
+                            </details>
+            
+                            <details class="function-analysis">
+                                <summary><code class="nombre-funcion">get_stack_size</code></summary>
+                                <div>
+                                    <h5>Propósito</h5>
+                                    <p>Calcular y devolver el número de nodos presentes en la pila circular.</p>
+                                    <h5>Parámetros</h5>
+                                    <ul class="list-disc list-inside pl-4 text-sm">
+                                        <li><code class="nombre-tipo">t_stack_node *stack</code>: Puntero a la cabeza de la pila.</li>
+                                    </ul>
+                                    <h5>Retorno</h5>
+                                    <ul class="list-disc list-inside pl-4 text-sm">
+                                       <li><code class="nombre-tipo">int</code>: El número de nodos en la pila (0 si está vacía).</li>
+                                    </ul>
+                                    <h5>Lógica</h5>
+                                    <ol class="list-decimal list-inside space-y-2 pl-4 text-sm">
+                                        <li>Inicializa un contador <code class="nombre-tipo">size</code> a 0.</li>
+                                        <li>Comprueba si la pila es <code class="nombre-constante">NULL</code>. Si lo es, retorna 0.</li>
+                                        <li>Establece un puntero <code class="nombre-tipo">current</code> a la cabeza de la pila.</li>
+                                        <li>Entra en un bucle <code class="nombre-constante">while(1)</code> (bucle infinito controlado internamente).</li>
+                                        <li>Incrementa <code class="nombre-tipo">size</code>.</li>
+                                        <li>Avanza <code class="nombre-tipo">current</code> al siguiente nodo (<code class="nombre-campo">current->next</code>).</li>
+                                        <li>Comprueba si <code class="nombre-tipo">current</code> ha vuelto a la cabeza (<code class="nombre-campo">current == stack</code>). Si es así, significa que ha recorrido toda la lista, y rompe el bucle.</li>
+                                        <li>Retorna el valor final de <code class="nombre-tipo">size</code>.</li>
+                                    </ol>
+                                     <h5>Dependencias</h5>
+                                    <p class="text-sm">Ninguna función externa llamada.</p>
+                                    <h5>Código</h5>
+                                    <pre><code class="language-c">int get_stack_size(t_stack_node *stack)
+            {
+                int             size;
+                t_stack_node    *current;
+            
+                size = 0;
+                if (!stack)
+                    return (0);
+                current = stack;
+                while (1) // Loop indefinitely until we circle back
+                {
+                    size++;
+                    current = current->next;
+                    if (current == stack) // If we are back at the head node
+                        break ;           // Exit the loop
+                }
+                return (size);
+            }</code></pre>
+                                </div>
+                            </details>
+            
+                        </div>
+                    </details>
 
                     <div class="task-placeholder mt-8">
                          <p>Análisis del archivo <code class="nombre-archivo">mandatory/srcs/parsing/parsing_utils_helpers.c</code> completado (5/28). El siguiente archivo a analizar sería <code class="nombre-archivo">mandatory/srcs/stack/stack_utils.c</code>.</p>
